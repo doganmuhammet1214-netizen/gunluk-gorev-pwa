@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Task, TaskFormData } from '../types';
+import type { Database } from '../lib/supabase';
 import { supabase, rowToTask } from '../lib/supabase';
+
+type TaskInsert = Database['public']['Tables']['tasks']['Insert'];
+type TaskUpdate = Database['public']['Tables']['tasks']['Update'];
 
 // ─── Durum Tipleri ───────────────────────────────────────────
 type LoadingState = 'idle' | 'loading' | 'success' | 'error';
@@ -100,15 +104,17 @@ export function useTasks(): UseTasksReturn {
     setTasks((prev) => [optimisticTask, ...prev]);
 
     try {
+      const insertPayload: TaskInsert = {
+        title: optimisticTask.title,
+        note: optimisticTask.note ?? null,
+        priority: optimisticTask.priority,
+        completed: false,
+        completed_at: null,
+        user_id: null, // Auth entegrasyonunda: (await supabase.auth.getUser()).data.user?.id
+      };
       const { data: inserted, error: insertError } = await supabase
         .from('tasks')
-        .insert({
-          title: optimisticTask.title,
-          note: optimisticTask.note ?? null,
-          priority: optimisticTask.priority,
-          completed: false,
-          user_id: null, // Auth entegrasyonunda: (await supabase.auth.getUser()).data.user?.id
-        })
+        .insert(insertPayload)
         .select()
         .single();
 
@@ -147,12 +153,13 @@ export function useTasks(): UseTasksReturn {
     );
 
     try {
+      const updatePayload: TaskUpdate = {
+        completed: newCompleted,
+        completed_at: newCompletedAt,
+      };
       const { error: updateError } = await supabase
         .from('tasks')
-        .update({
-          completed: newCompleted,
-          completed_at: newCompletedAt,
-        })
+        .update(updatePayload)
         .eq('id', id);
 
       if (updateError) throw updateError;

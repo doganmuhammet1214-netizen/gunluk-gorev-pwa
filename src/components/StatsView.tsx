@@ -1,4 +1,4 @@
-import { TrendingUp, Target, Zap, CheckCircle2, Clock, Flame } from 'lucide-react';
+import { TrendingUp, Target, CheckCircle2, Clock, Flame } from 'lucide-react';
 import { PRIORITY_CONFIG } from '../types';
 
 type StatsViewProps = {
