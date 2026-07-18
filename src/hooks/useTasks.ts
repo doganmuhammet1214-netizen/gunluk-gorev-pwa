@@ -114,7 +114,7 @@ export function useTasks(): UseTasksReturn {
       };
       const { data: inserted, error: insertError } = await supabase
         .from('tasks')
-        .insert(insertPayload)
+        .insert(insertPayload as any)
         .select()
         .single();
 
@@ -159,7 +159,7 @@ export function useTasks(): UseTasksReturn {
       };
       const { error: updateError } = await supabase
         .from('tasks')
-        .update(updatePayload)
+        .update(updatePayload as any)
         .eq('id', id);
 
       if (updateError) throw updateError;
