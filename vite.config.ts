@@ -8,11 +8,8 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      // Kendi sw.js dosyamızı kullanmak için 'injectManifest' stratejisi
-      strategies: 'injectManifest',
-      // public/sw.js bizim SW dosyamız; vite-plugin-pwa onu doğrudan kopyalar
-      srcDir: 'public',
-      filename: 'sw.js',
+      // generateSW: Workbox otomatik SW üretir — manifest çakışması olmaz
+      strategies: 'generateSW',
       // Üretimde SW'yi otomatik güncelle
       registerType: 'autoUpdate',
       // Dev modunda da SW'yi etkinleştir (push test için)
@@ -52,6 +49,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Push bildirimi + notificationclick kodunu üretilen SW'ye dahil et
+        importScripts: ['/sw-push.js'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
