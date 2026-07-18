@@ -8,7 +8,18 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      // Kendi sw.js dosyamızı kullanmak için 'injectManifest' stratejisi
+      strategies: 'injectManifest',
+      // public/sw.js bizim SW dosyamız; vite-plugin-pwa onu doğrudan kopyalar
+      srcDir: 'public',
+      filename: 'sw.js',
+      // Üretimde SW'yi otomatik güncelle
       registerType: 'autoUpdate',
+      // Dev modunda da SW'yi etkinleştir (push test için)
+      devOptions: {
+        enabled: true,
+        type: 'module',
+      },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icons/*.png'],
       manifest: {
         name: 'Günlük Görev',
