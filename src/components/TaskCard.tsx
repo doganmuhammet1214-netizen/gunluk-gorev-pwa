@@ -29,13 +29,17 @@ export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
   return (
     <div
       className={`
-        relative bg-slate-800/70 backdrop-blur-sm border border-slate-700/50
-        rounded-2xl border-l-4 ${config.borderColor}
-        transition-all duration-300 ease-out overflow-hidden
+        relative backdrop-blur-sm border-l-4 ${config.borderColor}
+        rounded-2xl transition-all duration-300 ease-out overflow-hidden
         ${deleting ? 'opacity-0 scale-95 translate-x-4' : 'opacity-100 scale-100 translate-x-0'}
         ${task.completed ? 'opacity-60' : ''}
         active:scale-[0.98]
       `}
+      style={{
+        background: 'var(--surface-alt)',
+        border: '1px solid var(--border)',
+        borderLeftWidth: 4,
+      }}
     >
       <div className="p-4">
         <div className="flex items-start gap-3">
@@ -47,9 +51,10 @@ export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
               transition-all duration-200 active:scale-90
               ${task.completed
                 ? 'border-emerald-500 bg-emerald-500'
-                : 'border-slate-600 bg-transparent hover:border-slate-400'
+                : 'bg-transparent'
               }
             `}
+            style={!task.completed ? { borderColor: 'var(--border-strong)' } : {}}
           >
             {task.completed && <Check size={13} strokeWidth={3} className="text-white" />}
           </button>
@@ -59,9 +64,7 @@ export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
             <div className="flex items-start justify-between gap-2">
               <p
                 className={`text-sm font-semibold leading-snug transition-all duration-200 ${
-                  task.completed
-                    ? 'line-through text-slate-500'
-                    : 'text-white'
+                  task.completed ? 'line-through text-app-muted' : 'text-app-primary'
                 }`}
               >
                 {task.title}
@@ -72,14 +75,14 @@ export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
                 {task.note && (
                   <button
                     onClick={() => setExpanded(!expanded)}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-slate-700/50 transition-colors active:scale-90"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-app-muted hover:text-app-secondary hover:bg-surface transition-colors active:scale-90"
                   >
                     {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   </button>
                 )}
                 <button
                   onClick={handleDelete}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 transition-colors active:scale-90"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-app-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors active:scale-90"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -94,17 +97,17 @@ export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
                 <span className={`w-1.5 h-1.5 rounded-full ${config.dotColor}`} />
                 {config.label}
               </span>
-              <span className="text-slate-600 text-[10px]">{formattedDate}</span>
+              <span className="text-app-faint text-[10px]">{formattedDate}</span>
             </div>
           </div>
         </div>
 
         {/* Note expansion */}
         {task.note && expanded && (
-          <div className="mt-3 ml-9 pt-3 border-t border-slate-700/50">
+          <div className="mt-3 ml-9 pt-3 border-t" style={{ borderColor: 'var(--border)' }}>
             <div className="flex items-start gap-2">
-              <FileText size={12} className="text-slate-500 mt-0.5 flex-shrink-0" />
-              <p className="text-slate-400 text-xs leading-relaxed">{task.note}</p>
+              <FileText size={12} className="text-app-muted mt-0.5 flex-shrink-0" />
+              <p className="text-app-secondary text-xs leading-relaxed">{task.note}</p>
             </div>
           </div>
         )}

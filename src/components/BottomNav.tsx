@@ -28,7 +28,10 @@ export function BottomNav({ activeTab, onTabChange, activeCount, completedCount 
   };
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800/80 px-2 pb-6 pt-2 safe-area-bottom">
+    <div
+      className="absolute bottom-0 left-0 right-0 backdrop-blur-xl border-t px-2 pb-6 pt-2 safe-area-bottom transition-colors duration-300"
+      style={{ background: 'var(--nav-bg)', borderColor: 'var(--border-strong)' }}
+    >
       <div className="flex">
         {TABS.map(({ id, label, Icon }) => {
           const isActive = activeTab === id;
@@ -39,7 +42,7 @@ export function BottomNav({ activeTab, onTabChange, activeCount, completedCount 
               onClick={() => onTabChange(id)}
               className={`
                 flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition-all duration-200 active:scale-90 relative
-                ${isActive ? 'text-violet-400' : 'text-slate-600 hover:text-slate-400'}
+                ${isActive ? 'text-violet-400' : 'text-app-faint hover:text-app-muted'}
               `}
             >
               <div className="relative">

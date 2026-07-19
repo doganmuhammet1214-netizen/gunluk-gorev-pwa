@@ -19,10 +19,13 @@ export function StatsView({ stats }: StatsViewProps) {
   return (
     <div className="px-4 pb-4">
       {/* Circular progress */}
-      <div className="bg-slate-800/60 border border-slate-700/50 rounded-3xl p-6 mb-4 flex flex-col items-center">
+      <div
+        className="border rounded-3xl p-6 mb-4 flex flex-col items-center transition-colors duration-300"
+        style={{ background: 'var(--surface-alt)', borderColor: 'var(--border)' }}
+      >
         <div className="relative w-36 h-36 mb-4">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r={radius} fill="none" stroke="rgb(30 41 59)" strokeWidth="8" />
+            <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--surface)" strokeWidth="8" />
             <circle
               cx="60"
               cy="60"
@@ -43,11 +46,11 @@ export function StatsView({ stats }: StatsViewProps) {
             </defs>
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <p className="text-white text-3xl font-bold">{stats.completionRate}%</p>
-            <p className="text-slate-500 text-xs">Tamamlama</p>
+            <p className="text-app-primary text-3xl font-bold">{stats.completionRate}%</p>
+            <p className="text-app-muted text-xs">Tamamlama</p>
           </div>
         </div>
-        <p className="text-slate-400 text-sm text-center">
+        <p className="text-app-secondary text-sm text-center">
           {stats.total > 0
             ? `${stats.completed} / ${stats.total} görev tamamlandı`
             : 'Henüz görev eklenmedi'}
@@ -88,8 +91,11 @@ export function StatsView({ stats }: StatsViewProps) {
 
       {/* Priority breakdown */}
       {stats.total > 0 && (
-        <div className="mt-4 bg-slate-800/60 border border-slate-700/50 rounded-3xl p-5">
-          <h3 className="text-white text-sm font-semibold mb-4 flex items-center gap-2">
+        <div
+          className="mt-4 border rounded-3xl p-5 transition-colors duration-300"
+          style={{ background: 'var(--surface-alt)', borderColor: 'var(--border)' }}
+        >
+          <h3 className="text-app-primary text-sm font-semibold mb-4 flex items-center gap-2">
             <TrendingUp size={15} className="text-violet-400" />
             Öncelik Dağılımı
           </h3>
@@ -99,10 +105,10 @@ export function StatsView({ stats }: StatsViewProps) {
               return (
                 <div key={p} className="flex items-center gap-3">
                   <span className={`text-xs font-medium w-12 ${cfg.textColor}`}>{cfg.label}</span>
-                  <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface)' }}>
                     <div className={`h-full ${cfg.color} rounded-full transition-all duration-700`} style={{ width: '30%' }} />
                   </div>
-                  <span className="text-slate-500 text-xs w-8 text-right">-</span>
+                  <span className="text-app-faint text-xs w-8 text-right">-</span>
                 </div>
               );
             })}
@@ -123,13 +129,16 @@ type StatCardProps = {
 
 function StatCard({ icon, bgColor, label, value, sub }: StatCardProps) {
   return (
-    <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
+    <div
+      className="border rounded-2xl p-4 transition-colors duration-300"
+      style={{ background: 'var(--surface-alt)', borderColor: 'var(--border)' }}
+    >
       <div className={`w-9 h-9 rounded-xl ${bgColor} flex items-center justify-center mb-3`}>
         {icon}
       </div>
-      <p className="text-white text-2xl font-bold">{value}</p>
-      <p className="text-slate-500 text-xs mt-0.5">{label}</p>
-      <p className="text-slate-600 text-[10px]">{sub}</p>
+      <p className="text-app-primary text-2xl font-bold">{value}</p>
+      <p className="text-app-muted text-xs mt-0.5">{label}</p>
+      <p className="text-app-faint text-[10px]">{sub}</p>
     </div>
   );
 }

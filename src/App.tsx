@@ -7,6 +7,7 @@ import { StatsView } from './components/StatsView';
 import { NotificationBanner } from './components/NotificationBanner';
 import { useTasks } from './hooks/useTasks';
 import { useNotifications } from './hooks/useNotifications';
+import { useTheme } from './hooks/useTheme';
 import { savePushSubscription } from './lib/supabase';
 import type { Tab } from './types';
 import { Plus, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
@@ -15,6 +16,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<Tab>('tasks');
   const [showForm, setShowForm] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   const {
     activeTasks,
     completedTasks,
@@ -59,17 +61,17 @@ function App() {
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+    <div className="min-h-screen bg-app flex items-center justify-center transition-colors duration-300">
       {/* Mobile frame */}
-      <div className="relative w-full max-w-sm h-screen max-h-[900px] bg-slate-950 overflow-hidden flex flex-col shadow-2xl border-x border-slate-800/40">
+      <div className="relative w-full max-w-sm h-screen max-h-[900px] bg-app overflow-hidden flex flex-col shadow-2xl border-x border-app transition-colors duration-300">
 
         {/* ─── Loading overlay (ilk yükleme) ─── */}
         {loading === 'loading' && activeTasks.length === 0 && completedTasks.length === 0 && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-sm gap-4">
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-app/90 backdrop-blur-sm gap-4">
             <div className="w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
               <Loader2 size={28} className="text-violet-400 animate-spin" />
             </div>
-            <p className="text-slate-400 text-sm">Görevler yükleniyor...</p>
+            <p className="text-app-secondary text-sm">Görevler yükleniyor...</p>
           </div>
         )}
 
@@ -91,7 +93,12 @@ function App() {
         {/* Scrollable content area */}
         <div className="flex-1 overflow-y-auto overscroll-none pb-24">
           {showHeader && (
-            <Header activeCount={activeTasks.length} completedCount={completedTasks.length} />
+            <Header
+              activeCount={activeTasks.length}
+              completedCount={completedTasks.length}
+              theme={theme}
+              onToggleTheme={toggleTheme}
+            />
           )}
 
           {/* ─── Bildirim izin banner'ı ─── */}
@@ -105,8 +112,8 @@ function App() {
 
           {activeTab === 'stats' && (
             <div className="pt-14 pb-2 px-5">
-              <h1 className="text-white text-2xl font-bold">İstatistikler</h1>
-              <p className="text-slate-400 text-sm mt-0.5">Görev özeti</p>
+              <h1 className="text-app-primary text-2xl font-bold">İstatistikler</h1>
+              <p className="text-app-secondary text-sm mt-0.5">Görev özeti</p>
             </div>
           )}
 

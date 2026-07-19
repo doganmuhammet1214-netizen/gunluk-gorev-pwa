@@ -20,7 +20,7 @@ export function TaskList({ tasks, type, onToggle, onDelete, onClearCompleted }: 
     <div className="px-4 pb-4">
       {type === 'completed' && onClearCompleted && tasks.length > 0 && (
         <div className="flex items-center justify-between mb-3">
-          <p className="text-slate-500 text-xs">
+          <p className="text-app-muted text-xs">
             {tasks.length} görev tamamlandı
           </p>
           <button
@@ -34,7 +34,7 @@ export function TaskList({ tasks, type, onToggle, onDelete, onClearCompleted }: 
       )}
 
       {type === 'active' && (
-        <p className="text-slate-500 text-xs mb-3">
+        <p className="text-app-muted text-xs mb-3">
           {tasks.length} bekleyen görev
         </p>
       )}

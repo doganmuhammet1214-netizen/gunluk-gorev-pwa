@@ -32,21 +32,29 @@ export function TaskForm({ onAdd, onClose }: TaskFormProps) {
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 backdrop-blur-sm"
+        style={{ background: 'var(--overlay)' }}
         onClick={onClose}
       />
 
       {/* Sheet */}
-      <div className="relative w-full max-w-sm bg-slate-900 border border-slate-700/60 rounded-t-3xl p-5 pb-8 animate-slide-up shadow-2xl">
+      <div
+        className="relative w-full max-w-sm border rounded-t-3xl p-5 pb-8 animate-slide-up shadow-2xl transition-colors duration-300"
+        style={{ background: 'var(--sheet-bg)', borderColor: 'var(--border-strong)' }}
+      >
         {/* Handle */}
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-slate-700" />
+        <div
+          className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full"
+          style={{ background: 'var(--surface)' }}
+        />
 
         {/* Header */}
         <div className="flex items-center justify-between mt-3 mb-5">
-          <h2 className="text-white text-lg font-bold">Yeni Görev</h2>
+          <h2 className="text-app-primary text-lg font-bold">Yeni Görev</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors active:scale-90"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-app-secondary hover:text-app-primary transition-colors active:scale-90"
+            style={{ background: 'var(--surface)' }}
           >
             <X size={16} />
           </button>
@@ -62,13 +70,19 @@ export function TaskForm({ onAdd, onClose }: TaskFormProps) {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Görev başlığı..."
               maxLength={120}
-              className="w-full bg-slate-800/80 border border-slate-700/60 rounded-xl px-4 py-3.5 text-white text-sm placeholder-slate-500 outline-none focus:border-violet-500/70 focus:ring-1 focus:ring-violet-500/30 transition-all"
+              className="w-full rounded-xl px-4 py-3.5 text-app-primary text-sm placeholder-app-muted outline-none focus:ring-1 focus:ring-violet-500/30 transition-all"
+              style={{
+                background: 'var(--input-bg)',
+                borderWidth: 1,
+                borderStyle: 'solid',
+                borderColor: 'var(--border-strong)',
+              }}
             />
           </div>
 
           {/* Priority selector */}
           <div>
-            <p className="text-slate-500 text-xs font-medium mb-2 px-1">Öncelik</p>
+            <p className="text-app-muted text-xs font-medium mb-2 px-1">Öncelik</p>
             <div className="flex gap-2">
               {PRIORITIES.map((p) => {
                 const cfg = PRIORITY_CONFIG[p];
@@ -83,11 +97,14 @@ export function TaskForm({ onAdd, onClose }: TaskFormProps) {
                       flex items-center justify-center gap-1.5
                       ${active
                         ? `${cfg.badgeBg} ${cfg.badgeText} border-2 ${cfg.borderColor} shadow-sm`
-                        : 'bg-slate-800 text-slate-500 border border-slate-700 hover:border-slate-600'
+                        : 'text-app-muted border'
                       }
                     `}
+                    style={!active ? { background: 'var(--surface)', borderColor: 'var(--border-strong)' } : {}}
                   >
-                    <span className={`w-2 h-2 rounded-full ${active ? cfg.dotColor : 'bg-slate-600'}`} />
+                    <span className={`w-2 h-2 rounded-full ${active ? cfg.dotColor : 'bg-app-faint'}`}
+                      style={!active ? { background: 'var(--text-faint)' } : {}}
+                    />
                     {cfg.label}
                   </button>
                 );
@@ -99,7 +116,7 @@ export function TaskForm({ onAdd, onClose }: TaskFormProps) {
           <button
             type="button"
             onClick={() => setShowNote(!showNote)}
-            className="w-full flex items-center gap-2 text-slate-500 text-xs py-1 hover:text-slate-300 transition-colors"
+            className="w-full flex items-center gap-2 text-app-muted text-xs py-1 hover:text-app-secondary transition-colors"
           >
             <StickyNote size={13} />
             {showNote ? 'Notu gizle' : 'Not ekle (isteğe bağlı)'}
@@ -116,7 +133,13 @@ export function TaskForm({ onAdd, onClose }: TaskFormProps) {
               placeholder="Not ekle..."
               rows={3}
               maxLength={500}
-              className="w-full bg-slate-800/80 border border-slate-700/60 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 outline-none focus:border-violet-500/70 focus:ring-1 focus:ring-violet-500/30 transition-all resize-none"
+              className="w-full rounded-xl px-4 py-3 text-app-primary text-sm placeholder-app-muted outline-none focus:ring-1 focus:ring-violet-500/30 transition-all resize-none"
+              style={{
+                background: 'var(--input-bg)',
+                borderWidth: 1,
+                borderStyle: 'solid',
+                borderColor: 'var(--border-strong)',
+              }}
             />
           )}
 

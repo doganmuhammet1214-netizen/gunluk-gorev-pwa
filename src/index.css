@@ -1,11 +1,56 @@
 @import "tailwindcss";
 
-/* ---- Custom CSS Variables & Base ---- */
-:root {
-  --color-bg: #020617;      /* slate-950 */
-  --color-surface: #0f172a; /* slate-900 */
+/* ══════════════════════════════════════════════════════════════
+   TEMA TOKEN SİSTEMİ
+   Tüm renkler burada tanımlanır; bileşenler yalnızca token kullanır.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Karanlık Tema (varsayılan) ─────────────────────────────── */
+:root,
+[data-theme="dark"] {
+  --bg:            #020617;   /* slate-950 */
+  --bg-2:          #0f172a;   /* slate-900 */
+  --surface:       #1e293b;   /* slate-800 */
+  --surface-alt:   rgba(30, 41, 59, 0.70); /* slate-800/70 */
+  --border:        rgba(51, 65, 85, 0.50); /* slate-700/50 */
+  --border-strong: rgba(51, 65, 85, 0.80); /* slate-700/80 */
+
+  --text-primary:  #f8fafc;   /* slate-50  */
+  --text-secondary:#94a3b8;   /* slate-400 */
+  --text-muted:    #475569;   /* slate-500 */
+  --text-faint:    #334155;   /* slate-700 */
+
+  --nav-bg:        rgba(15, 23, 42, 0.95); /* slate-900/95 */
+  --input-bg:      rgba(30, 41, 59, 0.80); /* slate-800/80 */
+  --sheet-bg:      #0f172a;   /* slate-900 */
+  --overlay:       rgba(0,0,0,0.60);
+
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* ── Aydınlık Tema ──────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg:            #f1f5f9;   /* slate-100 */
+  --bg-2:          #e2e8f0;   /* slate-200 */
+  --surface:       #ffffff;
+  --surface-alt:   rgba(255, 255, 255, 0.80);
+  --border:        rgba(148, 163, 184, 0.40); /* slate-400/40 */
+  --border-strong: rgba(148, 163, 184, 0.60);
+
+  --text-primary:  #0f172a;   /* slate-900 */
+  --text-secondary:#475569;   /* slate-500 */
+  --text-muted:    #94a3b8;   /* slate-400 */
+  --text-faint:    #cbd5e1;   /* slate-300 */
+
+  --nav-bg:        rgba(255, 255, 255, 0.95);
+  --input-bg:      rgba(241, 245, 249, 0.90);
+  --sheet-bg:      #ffffff;
+  --overlay:       rgba(0,0,0,0.40);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GLOBAL STILLER
+   ══════════════════════════════════════════════════════════════ */
 
 * {
   -webkit-tap-highlight-color: transparent;
@@ -14,76 +59,91 @@
 
 html, body {
   overscroll-behavior: none;
-  background: var(--color-bg);
+  background: var(--bg);
+  transition: background 0.3s ease;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: var(--text-primary);
 }
 
-/* Scrollbar hide */
+/* ══════════════════════════════════════════════════════════════
+   YARDIMCI SINIFLAR (token tabanlı)
+   ══════════════════════════════════════════════════════════════ */
+
+/* Arkaplanlar */
+.bg-app        { background-color: var(--bg); }
+.bg-app-2      { background-color: var(--bg-2); }
+.bg-surface    { background-color: var(--surface); }
+.bg-surface-alt{ background-color: var(--surface-alt); }
+
+/* Metinler */
+.text-app-primary   { color: var(--text-primary); }
+.text-app-secondary { color: var(--text-secondary); }
+.text-app-muted     { color: var(--text-muted); }
+.text-app-faint     { color: var(--text-faint); }
+
+/* Kenarlıklar */
+.border-app       { border-color: var(--border); }
+.border-app-strong{ border-color: var(--border-strong); }
+
+/* ══════════════════════════════════════════════════════════════
+   SCROLLBAR
+   ══════════════════════════════════════════════════════════════ */
 .overflow-y-auto {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
-.overflow-y-auto::-webkit-scrollbar {
-  display: none;
-}
+.overflow-y-auto::-webkit-scrollbar { display: none; }
 
-/* iOS safe area for bottom nav */
+/* ══════════════════════════════════════════════════════════════
+   iOS SAFE AREA
+   ══════════════════════════════════════════════════════════════ */
 .safe-area-bottom {
   padding-bottom: calc(0.5rem + var(--safe-area-bottom));
 }
 
-/* Bottom sheet slide-up animation */
-@keyframes slide-up {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
+/* ══════════════════════════════════════════════════════════════
+   ANİMASYONLAR
+   ══════════════════════════════════════════════════════════════ */
 
+@keyframes slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
 .animate-slide-up {
   animation: slide-up 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
-/* Task card appear animation */
 @keyframes task-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
 }
 
-/* Notification banner fade-in */
 @keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
 .animate-fade-in {
   animation: fade-in 0.28s ease-out forwards;
 }
 
-/* PWA standalone mode adjustments */
+/* Tema geçiş animasyonu */
+@keyframes theme-spin {
+  from { transform: rotate(0deg) scale(1); }
+  50%  { transform: rotate(180deg) scale(0.8); }
+  to   { transform: rotate(360deg) scale(1); }
+}
+.animate-theme-toggle {
+  animation: theme-spin 0.4s ease-in-out;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PWA STANDALONE
+   ══════════════════════════════════════════════════════════════ */
 @media (display-mode: standalone) {
-  body {
-    overscroll-behavior: none;
-  }
+  body { overscroll-behavior: none; }
 }
