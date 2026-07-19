@@ -1,16 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
 import { TaskList } from './components/TaskList';
 import { TaskForm } from './components/TaskForm';
 import { BottomNav } from './components/BottomNav';
 import { StatsView } from './components/StatsView';
+import { NotificationBanner } from './components/NotificationBanner';
 import { useTasks } from './hooks/useTasks';
+import { useNotifications } from './hooks/useNotifications';
+import { savePushSubscription } from './lib/supabase';
 import type { Tab } from './types';
 import { Plus, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('tasks');
   const [showForm, setShowForm] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const {
     activeTasks,
     completedTasks,
@@ -24,7 +28,30 @@ function App() {
     refetch,
   } = useTasks();
 
+  const { permission, status: notifStatus, subscription, subscribe } = useNotifications();
+
+  // Bildirim izni istenir → abonelik oluşturulursa Supabase'e kaydet
+  const handleSubscribe = useCallback(async () => {
+    await subscribe();
+  }, [subscribe]);
+
+  // Abonelik tamamlandığında Supabase'e yaz
+  useEffect(() => {
+    if (notifStatus === 'subscribed' && subscription) {
+      // Cihaz etiketi olarak user-agent özetini kullan
+      const label = navigator.userAgent.slice(0, 80) || 'Bilinmeyen Cihaz';
+      void savePushSubscription(subscription, label, null);
+    }
+  }, [notifStatus, subscription]);
+
   const showHeader = activeTab === 'tasks' || activeTab === 'completed';
+
+  // Bildirim banner'ını göster: izin 'granted' değilse ve kullanıcı kapatmadıysa
+  const showNotifBanner =
+    !bannerDismissed &&
+    notifStatus !== 'unsupported' &&
+    notifStatus !== 'subscribed' &&
+    permission !== 'granted';
 
   // Hata mesajını otomatik temizle
   useEffect(() => {
@@ -65,6 +92,15 @@ function App() {
         <div className="flex-1 overflow-y-auto overscroll-none pb-24">
           {showHeader && (
             <Header activeCount={activeTasks.length} completedCount={completedTasks.length} />
+          )}
+
+          {/* ─── Bildirim izin banner'ı ─── */}
+          {showNotifBanner && (
+            <NotificationBanner
+              status={notifStatus}
+              onSubscribe={() => void handleSubscribe()}
+              onDismiss={() => setBannerDismissed(true)}
+            />
           )}
 
           {activeTab === 'stats' && (
