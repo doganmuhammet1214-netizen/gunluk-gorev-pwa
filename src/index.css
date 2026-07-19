@@ -93,11 +93,13 @@ body {
 /* ══════════════════════════════════════════════════════════════
    SCROLLBAR
    ══════════════════════════════════════════════════════════════ */
-.overflow-y-auto {
+.overflow-y-auto,
+.scrollbar-none {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
-.overflow-y-auto::-webkit-scrollbar { display: none; }
+.overflow-y-auto::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar { display: none; }
 
 /* ══════════════════════════════════════════════════════════════
    iOS SAFE AREA

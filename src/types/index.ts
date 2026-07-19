@@ -10,13 +10,15 @@ export type Task = {
   completed: boolean;
   created_at: string;
   completed_at?: string;
-  user_id?: string; // Supabase auth için
+  reminder_time?: string | null; // ISO 8601 — bildirim zamanı
+  user_id?: string;
 };
 
 export type TaskFormData = {
   title: string;
   note: string;
   priority: Priority;
+  reminder_time: string | null; // ISO 8601 — null ise bildirim yok
 };
 
 export const PRIORITY_CONFIG = {

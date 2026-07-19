@@ -13,6 +13,8 @@ export type TaskRow = {
   completed: boolean;
   created_at: string;
   completed_at: string | null;
+  reminder_time: string | null;  // ISO 8601 — bildirim zamanı
+  is_notified: boolean;           // bildirim gönderildi mi
   user_id: string | null;
 };
 
@@ -77,6 +79,7 @@ export function rowToTask(row: TaskRow): Task {
     completed: row.completed,
     created_at: row.created_at,
     completed_at: row.completed_at ?? undefined,
+    reminder_time: row.reminder_time ?? null,
     user_id: row.user_id ?? undefined,
   };
 }

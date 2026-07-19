@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Trash2, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { Check, Trash2, ChevronDown, ChevronUp, FileText, Bell } from 'lucide-react';
 import type { Task } from '../types';
 import { PRIORITY_CONFIG } from '../types';
 
@@ -25,6 +25,15 @@ export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
     hour: '2-digit',
     minute: '2-digit',
   });
+
+  const reminderLabel = task.reminder_time
+    ? new Date(task.reminder_time).toLocaleString('tr-TR', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null;
 
   return (
     <div
@@ -90,7 +99,7 @@ export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
             </div>
 
             {/* Meta row */}
-            <div className="flex items-center gap-2 mt-1.5">
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               <span
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${config.badgeBg} ${config.badgeText}`}
               >
@@ -98,6 +107,12 @@ export function TaskCard({ task, onToggle, onDelete }: TaskCardProps) {
                 {config.label}
               </span>
               <span className="text-app-faint text-[10px]">{formattedDate}</span>
+              {reminderLabel && (
+                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-violet-500/10 text-violet-400">
+                  <Bell size={9} />
+                  {reminderLabel}
+                </span>
+              )}
             </div>
           </div>
         </div>

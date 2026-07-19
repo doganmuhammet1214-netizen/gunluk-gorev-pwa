@@ -98,6 +98,7 @@ export function useTasks(): UseTasksReturn {
       priority: data.priority,
       completed: false,
       created_at: new Date().toISOString(),
+      reminder_time: data.reminder_time,
     };
 
     // Optimistic update — anında UI'ya yansıt
@@ -110,6 +111,8 @@ export function useTasks(): UseTasksReturn {
         priority: optimisticTask.priority,
         completed: false,
         completed_at: null,
+        reminder_time: data.reminder_time,
+        is_notified: false,
         user_id: null, // Auth entegrasyonunda: (await supabase.auth.getUser()).data.user?.id
       };
       const { data: inserted, error: insertError } = await supabase
