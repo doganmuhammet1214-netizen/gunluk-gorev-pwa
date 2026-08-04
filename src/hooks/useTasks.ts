@@ -106,16 +106,29 @@ export function useTasks(): UseTasksReturn {
     setTasks((prev) => [optimisticTask, ...prev]);
 
     try {
-      const insertPayload: TaskInsert = {
-        title: optimisticTask.title,
-        note: optimisticTask.note ?? null,
-        priority: optimisticTask.priority,
-        completed: false,
+      // ── Supabase tasks tablosunun temel sütunları ──────────────
+      // Tabloda kesinlikle var olan sütunlar:
+      //   id, title, note, priority, completed, created_at,
+      //   completed_at, user_id
+      // Bildirim sütunları (reminder_time, is_notified) tabloda
+      // yoksa 400 hatası verir — önce migration çalıştır.
+      const insertPayload: Record<string, unknown> = {
+        title:        optimisticTask.title,
+        note:         optimisticTask.note ?? null,
+        priority:     optimisticTask.priority,
+        completed:    false,
         completed_at: null,
-        reminder_time: data.reminder_time,
-        is_notified: false,
-        user_id: null, // Auth entegrasyonunda: (await supabase.auth.getUser()).data.user?.id
+        user_id:      null,
       };
+
+      // reminder_time — tabloda bu sütun varsa ekle
+      if (data.reminder_time !== undefined) {
+        insertPayload['reminder_time'] = data.reminder_time;
+      }
+
+      // is_notified — tabloda bu sütun varsa ekle
+      insertPayload['is_notified'] = false;
+
       const { data: inserted, error: insertError } = await supabase
         .from('tasks')
         .insert(insertPayload as any)
@@ -146,14 +159,28 @@ export function useTasks(): UseTasksReturn {
           });
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       // Hata durumunda geri al
       setTasks((prev) => prev.filter((t) => t.id !== optimisticTask.id));
-      const msg = err instanceof Error ? err.message : 'Görev eklenemedi';
+
+      // ── Detaylı Supabase hata logu ─────────────────────────────
+      if (err?.message || err?.details || err?.hint || err?.code) {
+        console.error(
+          '[useTasks] Supabase addTask Hatası:',
+          '\n  message:', err.message,
+          '\n  details:', err.details,
+          '\n  hint:',    err.hint,
+          '\n  code:',    err.code
+        );
+      } else {
+        console.error('[useTasks] addTask:', err);
+      }
+
+      const msg = err?.message ?? 'Görev eklenemedi';
       setError(msg);
-      console.error('[useTasks] addTask:', err);
     }
   }, []);
+
 
   // ── Görev tamamla / geri al ────────────────────────────────
   const toggleTask = useCallback(async (id: string) => {
