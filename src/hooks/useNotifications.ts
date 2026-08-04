@@ -1,30 +1,35 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+/**
+ * useNotifications.ts
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Web Push bildirim abonelik yönetimi.
+ *
+ * Mimari:
+ *  - subscribeToPush()  → pushSubscription.ts üzerinden VAPID + Supabase
+ *  - iOS uyumu: subscribe() fonksiyonu SADECE kullanıcı etkileşimiyle çağrılır
+ *  - SW renewal: pushsubscriptionchange mesajını dinler ve Supabase'i günceller
+ */
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Tipler
-// ─────────────────────────────────────────────────────────────────────────────
+import { useState, useEffect, useCallback } from 'react';
+import {
+  isPushSupported,
+  subscribeToPush,
+  unsubscribeFromPush,
+  getExistingSubscription,
+  savePushSubscriptionToSupabase,
+  type PushSubJSON,
+} from '../lib/pushSubscription';
 
-/** Bildirim izni durumu */
-export type NotificationPermission = 'default' | 'granted' | 'denied';
+// ─── Tipler ──────────────────────────────────────────────────────────────────
 
-/** Push aboneliği durum makinesi */
+/** Abonelik durum makinesi */
 export type SubscriptionStatus =
-  | 'idle'           // Hook henüz başlatılmadı
-  | 'unsupported'    // Tarayıcı push'u desteklemiyor
-  | 'checking'       // SW kaydı + abonelik kontrol ediliyor
-  | 'permission-denied'  // Kullanıcı izni reddetti
-  | 'subscribing'    // Abonelik oluşturuluyor
-  | 'subscribed'     // Abonelik aktif
-  | 'error';         // Bir hata oluştu
-
-export interface PushSubscriptionJSON {
-  endpoint: string;
-  expirationTime: number | null;
-  keys: {
-    p256dh: string;
-    auth: string;
-  };
-}
+  | 'idle'             // Henüz başlatılmadı / abone değil
+  | 'unsupported'      // Tarayıcı push'u desteklemiyor
+  | 'checking'         // Mevcut abonelik kontrol ediliyor
+  | 'permission-denied'// Kullanıcı izni reddetti
+  | 'subscribing'      // Abonelik oluşturuluyor
+  | 'subscribed'       // Aktif abonelik var
+  | 'error';           // Hata oluştu
 
 export interface UseNotificationsReturn {
   /** Tarayıcının bildirim izni */
@@ -32,200 +37,113 @@ export interface UseNotificationsReturn {
   /** Abonelik durum makinesi */
   status: SubscriptionStatus;
   /** Aktif push aboneliği (subscribed durumundayken dolu) */
-  subscription: PushSubscriptionJSON | null;
+  subscription: PushSubJSON | null;
   /** Son hata mesajı */
   error: string | null;
-  /** İzin iste + SW kaydet + abonelik oluştur */
+  /**
+   * Bildirim iznini iste ve abonelik oluştur.
+   * ⚠️ SADECE kullanıcı tıklaması sonrasında çağırın (iOS zorunluluğu).
+   */
   subscribe: () => Promise<void>;
   /** Mevcut aboneliği iptal et */
   unsubscribe: () => Promise<void>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// VAPID public key
-// ─────────────────────────────────────────────────────────────────────────────
-// Gerçek push için web-push kütüphanesiyle üretilen VAPID public key'i
-// .env dosyanıza VITE_VAPID_PUBLIC_KEY=<base64url> olarak ekleyin.
-// Henüz yoksa boş bırakın — userVisibleOnly:true ile de çalışır ama
-// Firefox gibi tarayıcılar VAPID olmadan kabul etmeyebilir.
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
-
-/**
- * Base64url → Uint8Array dönüşümü (VAPID key için gerekli)
- */
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-  const rawData = atob(base64);
-  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Hook
 // ─────────────────────────────────────────────────────────────────────────────
+
 export function useNotifications(): UseNotificationsReturn {
   const [permission, setPermission] = useState<NotificationPermission>(
     () => (typeof Notification !== 'undefined' ? Notification.permission : 'default')
   );
-  const [status, setStatus] = useState<SubscriptionStatus>('idle');
-  const [subscription, setSubscription] = useState<PushSubscriptionJSON | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus]         = useState<SubscriptionStatus>('idle');
+  const [subscription, setSubscription] = useState<PushSubJSON | null>(null);
+  const [error, setError]           = useState<string | null>(null);
 
-  // SW registration referansı — tekrar kaydetmemek için tutuyoruz
-  const swRegistrationRef = useRef<ServiceWorkerRegistration | null>(null);
-
-  // ── Tarayıcı desteği ────────────────────────────────────────────────────
-  const isSupported =
-    typeof window !== 'undefined' &&
-    'serviceWorker' in navigator &&
-    'PushManager' in window &&
-    'Notification' in window;
-
-  // ── Mevcut aboneliği yükle (ilk render) ─────────────────────────────────
+  // ── Sayfa yüklendiğinde mevcut aboneliği kontrol et ─────────────────────
   useEffect(() => {
-    if (!isSupported) {
+    if (!isPushSupported()) {
       setStatus('unsupported');
       return;
     }
 
     setStatus('checking');
 
-    navigator.serviceWorker
-      .getRegistration('/sw.js')
-      .then(async (reg) => {
-        if (!reg) {
-          setStatus('idle');
-          return;
-        }
-        swRegistrationRef.current = reg;
-        const existing = await reg.pushManager.getSubscription();
+    getExistingSubscription()
+      .then((existing) => {
         if (existing) {
-          setSubscription(existing.toJSON() as PushSubscriptionJSON);
+          setSubscription(existing);
           setStatus('subscribed');
+          setPermission('granted');
         } else {
           setStatus('idle');
         }
       })
-      .catch((err) => {
-        console.error('[useNotifications] Mevcut abonelik kontrol hatası:', err);
-        setStatus('idle');
-      });
-  }, [isSupported]);
-
-  // ── SW kayıt yardımcısı ─────────────────────────────────────────────────
-  const ensureServiceWorker = useCallback(async (): Promise<ServiceWorkerRegistration> => {
-    if (swRegistrationRef.current) return swRegistrationRef.current;
-
-    const reg = await navigator.serviceWorker.register('/sw.js', {
-      scope: '/',
-    });
-
-    // SW aktif olana kadar bekle
-    await navigator.serviceWorker.ready;
-
-    swRegistrationRef.current = reg;
-    return reg;
+      .catch(() => setStatus('idle'));
   }, []);
 
-  // ── subscribe ───────────────────────────────────────────────────────────
-  const subscribe = useCallback(async () => {
-    if (!isSupported) {
-      setStatus('unsupported');
-      setError('Bu tarayıcı push bildirimlerini desteklemiyor.');
-      return;
-    }
-
-    setError(null);
-
-    // 1. Bildirim izni iste
-    const perm = await Notification.requestPermission();
-    setPermission(perm);
-
-    if (perm !== 'granted') {
-      setStatus('permission-denied');
-      setError('Bildirim izni reddedildi. Lütfen tarayıcı ayarlarından izin verin.');
-      return;
-    }
-
-    setStatus('subscribing');
-
-    try {
-      // 2. Service Worker'ı kaydet / al
-      const reg = await ensureServiceWorker();
-
-      // 3. Push aboneliği oluştur
-      const subscribeOptions: PushSubscriptionOptionsInit = {
-        userVisibleOnly: true, // Kullanıcıya görünür bildirimler zorunlu
-      };
-
-      // VAPID key mevcutsa ekle (üretim için önerilir)
-      if (VAPID_PUBLIC_KEY) {
-        subscribeOptions.applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-      }
-
-      const pushSub = await reg.pushManager.subscribe(subscribeOptions);
-      const subJson = pushSub.toJSON() as PushSubscriptionJSON;
-
-      setSubscription(subJson);
-      setStatus('subscribed');
-
-      console.log('[useNotifications] Push aboneliği oluşturuldu:', subJson.endpoint);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Bilinmeyen hata';
-      setError(`Abonelik oluşturulamadı: ${msg}`);
-      setStatus('error');
-      console.error('[useNotifications] subscribe hatası:', err);
-    }
-  }, [isSupported, ensureServiceWorker]);
-
-  // ── unsubscribe ─────────────────────────────────────────────────────────
-  const unsubscribe = useCallback(async () => {
-    if (!isSupported) return;
-
-    try {
-      const reg = swRegistrationRef.current ?? (await navigator.serviceWorker.getRegistration('/sw.js'));
-      if (!reg) return;
-
-      const existing = await reg.pushManager.getSubscription();
-      if (existing) {
-        await existing.unsubscribe();
-      }
-
-      setSubscription(null);
-      setStatus('idle');
-      console.log('[useNotifications] Abonelik iptal edildi.');
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Bilinmeyen hata';
-      setError(`Abonelik iptal edilemedi: ${msg}`);
-      console.error('[useNotifications] unsubscribe hatası:', err);
-    }
-  }, [isSupported]);
-
-  // ── pushsubscriptionchange mesajını dinle ────────────────────────────────
-  // SW, abonelik yenilenince bu mesajı gönderir
+  // ── SW'den gelen abonelik yenileme mesajını dinle ────────────────────────
   useEffect(() => {
-    if (!isSupported) return;
+    if (!isPushSupported()) return;
 
     const handler = (event: MessageEvent) => {
-      if (event.data?.type === 'PUSH_SUBSCRIPTION_RENEWED') {
-        const renewed = event.data.subscription as PushSubscriptionJSON;
+      if (event.data?.type === 'SW_SUBSCRIPTION_RENEWED') {
+        const renewed = event.data.subscription as PushSubJSON;
         setSubscription(renewed);
+        // Yenilenen aboneliği Supabase'e de kaydet
+        void savePushSubscriptionToSupabase(renewed, null);
         console.log('[useNotifications] Abonelik yenilendi:', renewed.endpoint);
       }
     };
 
     navigator.serviceWorker.addEventListener('message', handler);
     return () => navigator.serviceWorker.removeEventListener('message', handler);
-  }, [isSupported]);
+  }, []);
 
-  return {
-    permission,
-    status,
-    subscription,
-    error,
-    subscribe,
-    unsubscribe,
-  };
+  // ── subscribe ─────────────────────────────────────────────────────────────
+  /**
+   * Bildirim iznini ister ve push aboneliği oluşturur.
+   * iOS gereksinimi: Doğrudan bir kullanıcı tıklaması event handler'ından çağrılmalı.
+   */
+  const subscribe = useCallback(async () => {
+    if (!isPushSupported()) {
+      setStatus('unsupported');
+      setError('Bu tarayıcı Web Push bildirimlerini desteklemiyor.');
+      return;
+    }
+
+    setError(null);
+    setStatus('subscribing');
+
+    const result = await subscribeToPush(null); // userId = null (auth yokken)
+
+    if (result.ok) {
+      setSubscription(result.subscription);
+      setStatus('subscribed');
+      setPermission('granted');
+      console.log('[useNotifications] Abonelik tamamlandı:', result.subscription.endpoint);
+    } else {
+      setError(result.message);
+      setStatus(result.reason === 'denied' ? 'permission-denied' : 'error');
+      if (result.reason === 'denied') setPermission('denied');
+    }
+  }, []);
+
+  // ── unsubscribe ───────────────────────────────────────────────────────────
+  const unsubscribe = useCallback(async () => {
+    setError(null);
+
+    try {
+      await unsubscribeFromPush();
+      setSubscription(null);
+      setStatus('idle');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Bilinmeyen hata';
+      setError(`Abonelik iptal edilemedi: ${message}`);
+      console.error('[useNotifications] unsubscribe hatası:', err);
+    }
+  }, []);
+
+  return { permission, status, subscription, error, subscribe, unsubscribe };
 }

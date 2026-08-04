@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Task, TaskFormData } from '../types';
 import type { Database } from '../lib/supabase';
 import { supabase, rowToTask } from '../lib/supabase';
+import { scheduleTaskReminder } from '../lib/qstash';
 
 type TaskInsert = Database['public']['Tables']['tasks']['Insert'];
 type TaskUpdate = Database['public']['Tables']['tasks']['Update'];
@@ -125,9 +126,25 @@ export function useTasks(): UseTasksReturn {
 
       // Gerçek id ve created_at ile optimistic task'i güncelle
       if (inserted) {
+        const savedTask = rowToTask(inserted);
         setTasks((prev) =>
-          prev.map((t) => (t.id === optimisticTask.id ? rowToTask(inserted) : t))
+          prev.map((t) => (t.id === optimisticTask.id ? savedTask : t))
         );
+
+        // ── QStash: Hatırlatıcı zamanlaması ────────────────────────────────
+        // Görev başarıyla kaydedildikten sonra, eğer reminder_time varsa
+        // QStash'e geciktirilmiş bir iş tanımla.
+        if (savedTask.reminder_time) {
+          // Hata olsa bile görev eklemeyi bloke etme
+          scheduleTaskReminder({
+            taskId:      savedTask.id,
+            title:       savedTask.title,
+            reminderTime: savedTask.reminder_time,
+            priority:    savedTask.priority,
+          }).catch((err) => {
+            console.error('[useTasks] QStash zamanlama hatası:', err);
+          });
+        }
       }
     } catch (err) {
       // Hata durumunda geri al

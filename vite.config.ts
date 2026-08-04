@@ -50,7 +50,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         // Push bildirimi + notificationclick kodunu üretilen SW'ye dahil et
-        importScripts: ['/sw-push.js'],
+        importScripts: ['/sw.js'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,

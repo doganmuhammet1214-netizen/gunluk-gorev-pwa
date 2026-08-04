@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Header } from './components/Header';
 import { TaskList } from './components/TaskList';
 import { TaskForm } from './components/TaskForm';
@@ -8,7 +8,6 @@ import { NotificationBanner } from './components/NotificationBanner';
 import { useTasks } from './hooks/useTasks';
 import { useNotifications } from './hooks/useNotifications';
 import { useTheme } from './hooks/useTheme';
-import { savePushSubscription } from './lib/supabase';
 import type { Tab } from './types';
 import { Plus, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 
@@ -30,21 +29,13 @@ function App() {
     refetch,
   } = useTasks();
 
-  const { permission, status: notifStatus, subscription, subscribe } = useNotifications();
+  const { permission, status: notifStatus, subscribe } = useNotifications();
 
-  // Bildirim izni istenir → abonelik oluşturulursa Supabase'e kaydet
+  // Abonelik işlemi pushSubscription.ts içinde Supabase kaydını otomatik yapar.
+  // iOS: Bu callback doğrudan bir onClick handler'ına bağlanmalıdır.
   const handleSubscribe = useCallback(async () => {
     await subscribe();
   }, [subscribe]);
-
-  // Abonelik tamamlandığında Supabase'e yaz
-  useEffect(() => {
-    if (notifStatus === 'subscribed' && subscription) {
-      // Cihaz etiketi olarak user-agent özetini kullan
-      const label = navigator.userAgent.slice(0, 80) || 'Bilinmeyen Cihaz';
-      void savePushSubscription(subscription, label, null);
-    }
-  }, [notifStatus, subscription]);
 
   const showHeader = activeTab === 'tasks' || activeTab === 'completed';
 
