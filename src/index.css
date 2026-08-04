@@ -149,3 +149,17 @@ body {
 @media (display-mode: standalone) {
   body { overscroll-behavior: none; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   iOS ZOOM ENGELİ
+   iOS Safari, font-size < 16px olan input/select/textarea
+   elemanlarına odaklanıldığında otomatik zoom yapar.
+   Bu kural tüm form elemanlarını 16px'e sabitleyerek bunu engeller.
+   ══════════════════════════════════════════════════════════════ */
+@media screen and (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
