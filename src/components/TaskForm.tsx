@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Plus, ChevronDown, StickyNote, Bell, BellOff, ChevronUp } from 'lucide-react';
+import { X, Plus, ChevronDown, StickyNote, Bell, BellOff, ChevronUp, Loader2 } from 'lucide-react';
 import type { TaskFormData, Priority } from '../types';
 import { PRIORITY_CONFIG } from '../types';
 
 type TaskFormProps = {
   onAdd: (data: TaskFormData) => void;
   onClose: () => void;
+  isSubmitting?: boolean;
 };
 
 const PRIORITIES: Priority[] = ['low', 'medium', 'high'];
@@ -111,7 +112,7 @@ function DrumScroller({ items, selected, onChange, label }: DrumProps) {
 }
 
 // ── Ana bileşen ──────────────────────────────────────────────
-export function TaskForm({ onAdd, onClose }: TaskFormProps) {
+export function TaskForm({ onAdd, onClose, isSubmitting = false }: TaskFormProps) {
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
@@ -134,7 +135,8 @@ export function TaskForm({ onAdd, onClose }: TaskFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    // Çift gönderim & boş başlık koruımaları
+    if (!title.trim() || isSubmitting) return;
 
     let reminder_time: string | null = null;
     if (showReminder) {
@@ -160,11 +162,11 @@ export function TaskForm({ onAdd, onClose }: TaskFormProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
-      {/* Backdrop */}
+      {/* Backdrop — submitting sırasında kapanmayı engelle */}
       <div
         className="absolute inset-0 backdrop-blur-sm"
         style={{ background: 'var(--overlay)' }}
-        onClick={onClose}
+        onClick={isSubmitting ? undefined : onClose}
       />
 
       {/* Sheet */}
@@ -331,14 +333,16 @@ export function TaskForm({ onAdd, onClose }: TaskFormProps) {
           {/* Submit */}
           <button
             type="submit"
-            disabled={!title.trim()}
+            disabled={!title.trim() || isSubmitting}
             className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-violet-600 to-violet-500 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30"
           >
-            <Plus size={18} />
-            Görevi Ekle
-            {showReminder && (
+            {isSubmitting
+              ? <Loader2 size={18} className="animate-spin" />
+              : <Plus size={18} />}
+            {isSubmitting ? 'Ekleniyor...' : 'Görevi Ekle'}
+            {!isSubmitting && showReminder && (
               <span className="text-violet-200 font-normal text-xs ml-1">
-                · {selHour}:{selMinute}
+                &middot; {selHour}:{selMinute}
               </span>
             )}
           </button>

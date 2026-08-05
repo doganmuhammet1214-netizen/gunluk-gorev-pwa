@@ -21,6 +21,7 @@ function App() {
     completedTasks,
     stats,
     loading,
+    isSubmitting,
     error,
     addTask,
     toggleTask,
@@ -163,6 +164,7 @@ function App() {
         <TaskForm
           onAdd={(data) => { void addTask(data); }}
           onClose={() => setShowForm(false)}
+          isSubmitting={isSubmitting}
         />
       )}
     </div>

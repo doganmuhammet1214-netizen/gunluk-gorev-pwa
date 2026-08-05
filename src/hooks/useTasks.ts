@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Task, TaskFormData } from '../types';
 import type { Database } from '../lib/supabase';
 import { supabase, rowToTask } from '../lib/supabase';
@@ -22,6 +22,7 @@ type UseTasksReturn = {
     completionRate: number;
   };
   loading: LoadingState;
+  isSubmitting: boolean;
   error: string | null;
   addTask: (data: TaskFormData) => Promise<void>;
   toggleTask: (id: string) => Promise<void>;
@@ -34,7 +35,10 @@ type UseTasksReturn = {
 export function useTasks(): UseTasksReturn {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState<LoadingState>('idle');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Çift gönderimi önlemek için ref — render'dan bağımsız, anlık flag
+  const isAddingRef = useRef(false);
 
   // ── Görevleri yükle ────────────────────────────────────────
   const fetchTasks = useCallback(async () => {
@@ -69,7 +73,14 @@ export function useTasks(): UseTasksReturn {
         { event: '*', schema: 'public', table: 'tasks' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setTasks((prev) => [rowToTask(payload.new as Parameters<typeof rowToTask>[0]), ...prev]);
+            // Optimistic update ile çakışmayı önle:
+            // ID zaten listede varsa (gerçek ID ile güncellendi) tekrar ekleme.
+            setTasks((prev) => {
+              const incoming = rowToTask(payload.new as Parameters<typeof rowToTask>[0]);
+              const alreadyExists = prev.some((t) => t.id === incoming.id);
+              if (alreadyExists) return prev;
+              return [incoming, ...prev];
+            });
           } else if (payload.eventType === 'UPDATE') {
             setTasks((prev) =>
               prev.map((t) =>
@@ -92,6 +103,10 @@ export function useTasks(): UseTasksReturn {
 
   // ── Görev ekle ──────────────────────────────────────────────
   const addTask = useCallback(async (data: TaskFormData) => {
+    // Çift gönderimi önle
+    if (isAddingRef.current) return;
+    isAddingRef.current = true;
+    setIsSubmitting(true);
     const optimisticTask: Task = {
       id: crypto.randomUUID(),
       title: data.title.trim(),
@@ -178,6 +193,10 @@ export function useTasks(): UseTasksReturn {
 
       const msg = err?.message ?? 'Görev eklenemedi';
       setError(msg);
+    } finally {
+      // Her durumda flag'i serbest bırak
+      isAddingRef.current = false;
+      setIsSubmitting(false);
     }
   }, []);
 
@@ -291,6 +310,7 @@ export function useTasks(): UseTasksReturn {
     completedTasks,
     stats,
     loading,
+    isSubmitting,
     error,
     addTask,
     toggleTask,
