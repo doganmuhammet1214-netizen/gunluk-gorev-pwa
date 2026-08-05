@@ -2,11 +2,11 @@
  * AuthScreen.tsx
  * ─────────────────────────────────────────────────────────────────────────────
  * Giriş Yap / Kayıt Ol ekranı.
- * Mevcut tema token sistemini kullanır (--bg, --sheet-bg, --border vb.)
+ * iOS PWA safe-area, Inter font, focus rings, select-none tam uyumlu.
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { Mail, Lock, Eye, EyeOff, LogIn, UserPlus, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn, UserPlus, Loader2, AlertCircle, CheckCircle2, Sparkles } from 'lucide-react';
 import type { UseAuthReturn } from '../hooks/useAuth';
 
 // ─── Tipler ───────────────────────────────────────────────────────────────────
@@ -56,7 +56,6 @@ export function AuthScreen({
     } else {
       const result = await onSignUp(email.trim(), password);
       if (!result.error) {
-        // Email doğrulama açıksa başarı mesajı göster
         setSuccessMsg(
           'Kayıt başarılı! E-posta adresinize gönderilen bağlantıya tıklayarak giriş yapabilirsiniz.'
         );
@@ -69,33 +68,57 @@ export function AuthScreen({
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4 transition-colors duration-300"
-      style={{ background: 'var(--bg)' }}
+      className="min-h-screen flex flex-col items-center justify-center px-5 select-none transition-colors duration-300"
+      style={{
+        background: 'var(--bg)',
+        paddingTop: 'max(1.5rem, env(safe-area-inset-top))',
+        paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
+      }}
     >
-      {/* Arka plan desen */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124,58,237,0.15) 0%, transparent 70%)',
-        }}
-      />
+      {/* Arka plan efektleri */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Üst mor halo */}
+        <div
+          className="absolute -top-32 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full opacity-30"
+          style={{
+            background: 'radial-gradient(circle, rgba(124,58,237,0.6) 0%, transparent 70%)',
+            filter: 'blur(60px)',
+          }}
+        />
+        {/* Alt sağ accent */}
+        <div
+          className="absolute -bottom-20 -right-20 w-64 h-64 rounded-full opacity-20"
+          style={{
+            background: 'radial-gradient(circle, rgba(99,102,241,0.7) 0%, transparent 70%)',
+            filter: 'blur(50px)',
+          }}
+        />
+        {/* Mesh grid — subtle */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(124,58,237,1) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,1) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+          }}
+        />
+      </div>
 
-      <div className="relative w-full max-w-sm">
+      <div className="relative w-full max-w-sm animate-fade-in">
         {/* Logo / başlık */}
         <div className="text-center mb-8">
           <div
-            className="inline-flex w-16 h-16 rounded-2xl items-center justify-center mb-4 shadow-lg"
+            className="inline-flex w-20 h-20 rounded-3xl items-center justify-center mb-5 shadow-2xl"
             style={{
-              background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
-              boxShadow: '0 8px 32px rgba(124,58,237,0.35)',
+              background: 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)',
+              boxShadow: '0 12px 40px rgba(124,58,237,0.45), 0 0 0 1px rgba(124,58,237,0.2)',
             }}
           >
-            <CheckCircle2 size={28} className="text-white" />
+            <CheckCircle2 size={32} className="text-white" strokeWidth={2} />
           </div>
-          <h1 className="text-app-primary text-2xl font-bold">Günlük Görev</h1>
-          <p className="text-app-secondary text-sm mt-1">
-            {mode === 'signin' ? 'Hesabına giriş yap' : 'Yeni hesap oluştur'}
+          <h1 className="text-app-primary text-3xl font-bold tracking-tight">Günlük Görev</h1>
+          <p className="text-app-secondary text-sm mt-2 font-medium">
+            {mode === 'signin' ? 'Hesabına hoş geldin 👋' : 'Yeni hesap oluştur ✨'}
           </p>
         </div>
 
@@ -105,7 +128,7 @@ export function AuthScreen({
           style={{
             background: 'var(--sheet-bg)',
             borderColor: 'var(--border-strong)',
-            boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
+            boxShadow: '0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(124,58,237,0.08)',
           }}
         >
           {/* Mod toggle */}
@@ -119,7 +142,7 @@ export function AuthScreen({
                 type="button"
                 onClick={() => setMode(m)}
                 className={`
-                  flex-1 py-2 rounded-xl text-sm font-semibold transition-all duration-200
+                  flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 active:scale-[0.97]
                   ${mode === m
                     ? 'text-white shadow-md'
                     : 'text-app-secondary hover:text-app-primary'
@@ -129,7 +152,7 @@ export function AuthScreen({
                   mode === m
                     ? {
                         background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
-                        boxShadow: '0 4px 12px rgba(124,58,237,0.35)',
+                        boxShadow: '0 4px 16px rgba(124,58,237,0.40)',
                       }
                     : {}
                 }
@@ -139,11 +162,11 @@ export function AuthScreen({
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3.5">
             {/* E-posta */}
             <div className="relative">
               <Mail
-                size={16}
+                size={15}
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none"
               />
               <input
@@ -154,10 +177,19 @@ export function AuthScreen({
                 placeholder="E-posta adresi"
                 autoComplete="email"
                 required
-                className="w-full pl-10 pr-4 py-3.5 rounded-xl text-app-primary text-sm placeholder-app-muted outline-none transition-all focus:ring-1 focus:ring-violet-500/40"
+                className="select-text w-full pl-10 pr-4 py-3.5 rounded-2xl text-app-primary text-sm placeholder-app-muted outline-none transition-all duration-200"
                 style={{
                   background: 'var(--input-bg)',
-                  border: '1px solid var(--border-strong)',
+                  border: '1.5px solid var(--border-strong)',
+                  fontFamily: 'inherit',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'rgba(124,58,237,0.55)';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.12)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'var(--border-strong)';
+                  e.target.style.boxShadow = 'none';
                 }}
               />
             </div>
@@ -165,7 +197,7 @@ export function AuthScreen({
             {/* Şifre */}
             <div className="relative">
               <Lock
-                size={16}
+                size={15}
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none"
               />
               <input
@@ -176,34 +208,47 @@ export function AuthScreen({
                 autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
                 required
                 minLength={6}
-                className="w-full pl-10 pr-12 py-3.5 rounded-xl text-app-primary text-sm placeholder-app-muted outline-none transition-all focus:ring-1 focus:ring-violet-500/40"
+                className="select-text w-full pl-10 pr-12 py-3.5 rounded-2xl text-app-primary text-sm placeholder-app-muted outline-none transition-all duration-200"
                 style={{
                   background: 'var(--input-bg)',
-                  border: '1px solid var(--border-strong)',
+                  border: '1.5px solid var(--border-strong)',
+                  fontFamily: 'inherit',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = 'rgba(124,58,237,0.55)';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.12)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'var(--border-strong)';
+                  e.target.style.boxShadow = 'none';
                 }}
               />
               <button
                 type="button"
                 onClick={() => setShowPass((v) => !v)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-secondary transition-colors"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-secondary transition-colors active:scale-90 p-1"
                 tabIndex={-1}
               >
-                {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
 
             {/* Hata mesajı */}
             {authError && (
-              <div className="flex items-start gap-2.5 rounded-xl px-3.5 py-3 bg-rose-900/30 border border-rose-700/40">
-                <AlertCircle size={15} className="text-rose-400 flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2.5 rounded-2xl px-3.5 py-3 animate-fade-in"
+                style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.20)' }}
+              >
+                <AlertCircle size={14} className="text-rose-400 flex-shrink-0 mt-0.5" />
                 <p className="text-rose-300 text-xs leading-snug">{authError}</p>
               </div>
             )}
 
-            {/* Başarı mesajı (kayıt sonrası email doğrulama) */}
+            {/* Başarı mesajı */}
             {successMsg && (
-              <div className="flex items-start gap-2.5 rounded-xl px-3.5 py-3 bg-emerald-900/30 border border-emerald-700/40">
-                <CheckCircle2 size={15} className="text-emerald-400 flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2.5 rounded-2xl px-3.5 py-3 animate-fade-in"
+                style={{ background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.20)' }}
+              >
+                <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0 mt-0.5" />
                 <p className="text-emerald-300 text-xs leading-snug">{successMsg}</p>
               </div>
             )}
@@ -212,11 +257,11 @@ export function AuthScreen({
             <button
               type="submit"
               disabled={!isValid || authLoading}
-              className="w-full py-3.5 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed mt-2"
               style={{
                 background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
                 boxShadow: isValid && !authLoading
-                  ? '0 8px 24px rgba(124,58,237,0.35)'
+                  ? '0 10px 30px rgba(124,58,237,0.40), 0 0 0 1px rgba(124,58,237,0.15)'
                   : 'none',
               }}
             >
@@ -225,22 +270,22 @@ export function AuthScreen({
               ) : mode === 'signin' ? (
                 <LogIn size={18} />
               ) : (
-                <UserPlus size={18} />
+                <Sparkles size={18} />
               )}
               {authLoading
-                ? mode === 'signin' ? 'Giriş yapılıyor...' : 'Kayıt olunuyor...'
-                : mode === 'signin' ? 'Giriş Yap' : 'Kayıt Ol'
+                ? (mode === 'signin' ? 'Giriş yapılıyor...' : 'Kayıt olunuyor...')
+                : (mode === 'signin' ? 'Giriş Yap' : 'Hesap Oluştur')
               }
             </button>
           </form>
 
           {/* Alt link */}
-          <p className="text-center text-app-muted text-xs mt-5">
+          <p className="text-center text-app-muted text-xs mt-5 leading-relaxed">
             {mode === 'signin' ? 'Hesabın yok mu? ' : 'Zaten hesabın var mı? '}
             <button
               type="button"
               onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-              className="text-violet-400 font-medium hover:text-violet-300 transition-colors underline underline-offset-2"
+              className="text-violet-400 font-semibold hover:text-violet-300 transition-colors underline underline-offset-2 active:scale-95"
             >
               {mode === 'signin' ? 'Kayıt Ol' : 'Giriş Yap'}
             </button>

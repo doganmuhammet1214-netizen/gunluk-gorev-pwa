@@ -29,10 +29,17 @@ export function BottomNav({ activeTab, onTabChange, activeCount, completedCount 
 
   return (
     <div
-      className="absolute bottom-0 left-0 right-0 backdrop-blur-xl border-t px-2 pb-6 pt-2 safe-area-bottom transition-colors duration-300"
-      style={{ background: 'var(--nav-bg)', borderColor: 'var(--border-strong)' }}
+      className="absolute bottom-0 left-0 right-0 border-t transition-colors duration-300 select-none"
+      style={{
+        background: 'var(--nav-bg)',
+        borderColor: 'var(--border-strong)',
+        backdropFilter: 'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+        /* ✅ pb-safe: iOS home indicator */
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}
     >
-      <div className="flex">
+      <div className="flex px-2 pt-1.5 pb-1">
         {TABS.map(({ id, label, Icon }) => {
           const isActive = activeTab === id;
           const count = getCount(id);
@@ -40,33 +47,42 @@ export function BottomNav({ activeTab, onTabChange, activeCount, completedCount 
             <button
               key={id}
               onClick={() => onTabChange(id)}
-              className={`
-                flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition-all duration-200 active:scale-90 relative
-                ${isActive ? 'text-violet-400' : 'text-app-faint hover:text-app-muted'}
-              `}
+              className="flex-1 flex flex-col items-center gap-0.5 py-2 rounded-2xl transition-all duration-200 active:scale-90 relative"
             >
-              <div className="relative">
+              {/* Aktif tab: iOS pill background */}
+              {isActive && (
+                <div
+                  className="absolute inset-x-2 inset-y-1 rounded-xl"
+                  style={{ background: 'rgba(124,58,237,0.12)' }}
+                />
+              )}
+
+              <div className="relative z-10">
                 <Icon
                   size={22}
-                  strokeWidth={isActive ? 2 : 1.5}
-                  className={`transition-all duration-200 ${isActive ? 'scale-110' : 'scale-100'}`}
+                  strokeWidth={isActive ? 2.2 : 1.6}
+                  className={`transition-all duration-200 ${isActive ? 'text-violet-400 scale-110' : 'text-app-muted'}`}
                 />
                 {count !== null && count > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-violet-500 text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                  <span
+                    className="absolute -top-1.5 -right-2 min-w-[16px] h-4 rounded-full text-white text-[9px] font-bold flex items-center justify-center leading-none px-0.5"
+                    style={{
+                      background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                      boxShadow: '0 2px 6px rgba(124,58,237,0.40)',
+                    }}
+                  >
                     {count > 99 ? '99+' : count}
                   </span>
                 )}
               </div>
+
               <span
-                className={`text-[10px] font-medium transition-all duration-200 ${
-                  isActive ? 'opacity-100' : 'opacity-60'
+                className={`text-[10px] font-semibold transition-all duration-200 z-10 ${
+                  isActive ? 'text-violet-400' : 'text-app-muted opacity-70'
                 }`}
               >
                 {label}
               </span>
-              {isActive && (
-                <div className="absolute bottom-1 w-1 h-1 rounded-full bg-violet-400" />
-              )}
             </button>
           );
         })}

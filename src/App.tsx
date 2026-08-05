@@ -11,7 +11,7 @@ import { useNotifications } from './hooks/useNotifications';
 import { useTheme } from './hooks/useTheme';
 import { useAuth } from './hooks/useAuth';
 import type { Tab } from './types';
-import { Plus, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
+import { Plus, AlertCircle, RefreshCw, Loader2, BarChart3 } from 'lucide-react';
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('tasks');
@@ -40,7 +40,6 @@ function App() {
 
   const { permission, status: notifStatus, subscribe } = useNotifications({ userId: user?.id ?? null });
 
-  // Abonelik işlemi pushSubscription.ts içinde Supabase kaydını otomatik yapar.
   // iOS: Bu callback doğrudan bir onClick handler'ına bağlanmalıdır.
   const handleSubscribe = useCallback(async () => {
     await subscribe();
@@ -48,14 +47,13 @@ function App() {
 
   const showHeader = activeTab === 'tasks' || activeTab === 'completed';
 
-  // Bildirim banner'ını göster: izin 'granted' değilse ve kullanıcı kapatmadıysa
+  // Bildirim banner'ını göster
   const showNotifBanner =
     !bannerDismissed &&
     notifStatus !== 'unsupported' &&
     notifStatus !== 'subscribed' &&
     permission !== 'granted';
 
-  // Hata mesajını otomatik temizle
   useEffect(() => {
     // Hata gösterilirse 4 saniye sonra kaybolur (isteğe bağlı)
   }, [error]);
@@ -64,20 +62,30 @@ function App() {
   if (authLoading) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center"
+        className="min-h-screen flex items-center justify-center select-none"
         style={{ background: 'var(--bg)' }}
       >
-        <div className="flex flex-col items-center gap-4">
+        {/* Arka plan glow */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(124,58,237,0.12) 0%, transparent 70%)',
+          }}
+        />
+        <div className="relative flex flex-col items-center gap-5 animate-fade-in">
           <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            className="w-20 h-20 rounded-3xl flex items-center justify-center shadow-2xl"
             style={{
-              background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
-              boxShadow: '0 8px 32px rgba(124,58,237,0.35)',
+              background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
+              boxShadow: '0 12px 40px rgba(124,58,237,0.40)',
             }}
           >
-            <Loader2 size={28} className="text-white animate-spin" />
+            <Loader2 size={30} className="text-white animate-spin" />
           </div>
-          <p className="text-app-secondary text-sm">Yükleniyor...</p>
+          <div className="text-center">
+            <p className="text-app-primary font-semibold text-base">Günlük Görev</p>
+            <p className="text-app-secondary text-sm mt-0.5">Yükleniyor...</p>
+          </div>
         </div>
       </div>
     );
@@ -100,28 +108,44 @@ function App() {
   return (
     <div className="min-h-screen bg-app flex items-center justify-center transition-colors duration-300">
       {/* Mobile frame */}
-      <div className="relative w-full max-w-sm h-screen max-h-[900px] bg-app overflow-hidden flex flex-col shadow-2xl border-x border-app transition-colors duration-300">
+      <div className="relative w-full max-w-sm h-screen max-h-[900px] bg-app overflow-hidden flex flex-col shadow-2xl border-x border-app transition-colors duration-300 select-none">
 
         {/* ─── Loading overlay (ilk yükleme) ─── */}
         {loading === 'loading' && activeTasks.length === 0 && completedTasks.length === 0 && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-app/90 backdrop-blur-sm gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
-              <Loader2 size={28} className="text-violet-400 animate-spin" />
+          <div
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4"
+            style={{ background: 'rgba(10,15,30,0.90)', backdropFilter: 'blur(8px)' }}
+          >
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center"
+              style={{
+                background: 'rgba(124,58,237,0.15)',
+                border: '1px solid rgba(124,58,237,0.25)',
+              }}
+            >
+              <Loader2 size={24} className="text-violet-400 animate-spin" />
             </div>
-            <p className="text-app-secondary text-sm">Görevler yükleniyor...</p>
+            <p className="text-app-secondary text-sm font-medium">Görevler yükleniyor...</p>
           </div>
         )}
 
         {/* ─── Error banner ─── */}
         {error && (
-          <div className="absolute top-4 left-4 right-4 z-30 bg-rose-900/80 backdrop-blur-sm border border-rose-700/60 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-xl">
-            <AlertCircle size={16} className="text-rose-400 flex-shrink-0" />
-            <p className="text-rose-200 text-xs flex-1 leading-snug">{error}</p>
+          <div
+            className="absolute top-4 left-4 right-4 z-30 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-xl animate-fade-in"
+            style={{
+              background: 'rgba(239,68,68,0.12)',
+              border: '1px solid rgba(239,68,68,0.25)',
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            <AlertCircle size={15} className="text-rose-400 flex-shrink-0" />
+            <p className="text-rose-300 text-xs flex-1 leading-snug">{error}</p>
             <button
               onClick={() => void refetch()}
-              className="flex items-center gap-1 text-rose-300 text-xs font-medium hover:text-white transition-colors active:scale-90 flex-shrink-0"
+              className="flex items-center gap-1 text-rose-300 text-xs font-semibold hover:text-white transition-colors active:scale-90 flex-shrink-0"
             >
-              <RefreshCw size={12} />
+              <RefreshCw size={11} />
               Tekrar dene
             </button>
           </div>
@@ -149,10 +173,26 @@ function App() {
             />
           )}
 
+          {/* ─── İstatistikler sekme başlığı ─── */}
           {activeTab === 'stats' && (
-            <div className="pt-14 pb-2 px-5">
-              <h1 className="text-app-primary text-2xl font-bold">İstatistikler</h1>
-              <p className="text-app-secondary text-sm mt-0.5">Görev özeti</p>
+            <div
+              className="px-5 pb-4"
+              style={{
+                paddingTop: 'calc(3.5rem + env(safe-area-inset-top, 0px))',
+              }}
+            >
+              <div className="flex items-center gap-3 mb-1">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{ background: 'rgba(124,58,237,0.15)' }}
+                >
+                  <BarChart3 size={18} className="text-violet-400" />
+                </div>
+                <div>
+                  <h1 className="text-app-primary text-2xl font-bold tracking-tight">İstatistikler</h1>
+                  <p className="text-app-secondary text-xs font-medium">Görev özeti</p>
+                </div>
+              </div>
             </div>
           )}
 
@@ -180,17 +220,21 @@ function App() {
           )}
 
           {activeTab === 'stats' && (
-            <div className="pt-3">
+            <div className="pt-1">
               <StatsView stats={stats} />
             </div>
           )}
         </div>
 
-        {/* FAB - Add task button (only on tasks tab) */}
+        {/* FAB - Görev ekle butonu */}
         {activeTab === 'tasks' && (
           <button
             onClick={() => setShowForm(true)}
-            className="absolute bottom-24 right-4 w-14 h-14 rounded-full bg-gradient-to-br from-violet-600 to-violet-500 shadow-lg shadow-violet-500/30 flex items-center justify-center transition-all duration-200 active:scale-90 hover:shadow-violet-500/50 hover:scale-105 z-10"
+            className="absolute bottom-24 right-4 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 active:scale-90 z-10"
+            style={{
+              background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+              boxShadow: '0 8px 28px rgba(124,58,237,0.50), 0 0 0 1px rgba(124,58,237,0.20)',
+            }}
             aria-label="Görev ekle"
           >
             <Plus size={26} strokeWidth={2.5} className="text-white" />
@@ -219,4 +263,3 @@ function App() {
 }
 
 export default App;
-

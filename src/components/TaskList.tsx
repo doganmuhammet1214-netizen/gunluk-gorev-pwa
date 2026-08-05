@@ -18,26 +18,30 @@ export function TaskList({ tasks, type, onToggle, onDelete, onClearCompleted }: 
 
   return (
     <div className="px-4 pb-4">
-      {type === 'completed' && onClearCompleted && tasks.length > 0 && (
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-app-muted text-xs">
-            {tasks.length} görev tamamlandı
-          </p>
+      {/* Section header */}
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-app-muted text-xs font-semibold uppercase tracking-wider">
+          {type === 'active'
+            ? `${tasks.length} Bekleyen Görev`
+            : `${tasks.length} Tamamlanan`
+          }
+        </p>
+
+        {type === 'completed' && onClearCompleted && tasks.length > 0 && (
           <button
             onClick={onClearCompleted}
-            className="flex items-center gap-1.5 text-rose-400 text-xs font-medium hover:text-rose-300 transition-colors active:scale-95 py-1 px-2 rounded-lg hover:bg-rose-500/10"
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all duration-200 active:scale-95"
+            style={{
+              color: '#f87171',
+              background: 'rgba(239,68,68,0.10)',
+              border: '1px solid rgba(239,68,68,0.15)',
+            }}
           >
-            <Trash2 size={12} />
+            <Trash2 size={11} />
             Tümünü temizle
           </button>
-        </div>
-      )}
-
-      {type === 'active' && (
-        <p className="text-app-muted text-xs mb-3">
-          {tasks.length} bekleyen görev
-        </p>
-      )}
+        )}
+      </div>
 
       <div className="space-y-2.5">
         {tasks.map((task) => (

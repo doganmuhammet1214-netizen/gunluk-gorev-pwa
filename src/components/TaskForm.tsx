@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Plus, ChevronDown, StickyNote, Bell, BellOff, ChevronUp, Loader2 } from 'lucide-react';
+import { X, Plus, Bell, BellOff, ChevronDown, StickyNote, ChevronUp, Loader2 } from 'lucide-react';
 import type { TaskFormData, Priority } from '../types';
 import { PRIORITY_CONFIG } from '../types';
 
@@ -16,7 +16,7 @@ const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 // Dakika listesi: 00-55 (5'er 5'er)
 const MINUTES = Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0'));
 
-// ── Drum scroller yardımcı bileşeni ─────────────────────────
+// ── Drum scroller yardımcı bileşeni ─────────────────────────────────────────
 type DrumProps = {
   items: string[];
   selected: string;
@@ -28,7 +28,6 @@ function DrumScroller({ items, selected, onChange, label }: DrumProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const ITEM_H = 40; // px
 
-  // Seçili öğeye scroll et
   const scrollTo = useCallback((val: string, animated = true) => {
     const idx = items.indexOf(val);
     if (idx === -1 || !containerRef.current) return;
@@ -38,12 +37,10 @@ function DrumScroller({ items, selected, onChange, label }: DrumProps) {
     });
   }, [items]);
 
-  // İlk renderda pozisyona git
   useEffect(() => {
     scrollTo(selected, false);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Scroll bittikten sonra en yakın değeri yakala
   const handleScroll = useCallback(() => {
     if (!containerRef.current) return;
     const scrollTop = containerRef.current.scrollTop;
@@ -54,14 +51,17 @@ function DrumScroller({ items, selected, onChange, label }: DrumProps) {
 
   return (
     <div className="flex flex-col items-center gap-1">
-      <span className="text-app-muted text-[10px] font-semibold uppercase tracking-widest mb-0.5">
+      <span className="text-app-muted text-[10px] font-bold uppercase tracking-widest mb-0.5">
         {label}
       </span>
       <div className="relative w-14">
         {/* Seçim çerçevesi */}
         <div
-          className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-10 rounded-xl pointer-events-none z-10 border-2 border-violet-500/50"
-          style={{ background: 'rgba(124,58,237,0.10)' }}
+          className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-10 rounded-xl pointer-events-none z-10 border-2"
+          style={{
+            borderColor: 'rgba(124,58,237,0.50)',
+            background: 'rgba(124,58,237,0.10)',
+          }}
         />
         {/* Fade — üst */}
         <div
@@ -85,7 +85,6 @@ function DrumScroller({ items, selected, onChange, label }: DrumProps) {
             WebkitOverflowScrolling: 'touch',
           }}
         >
-          {/* Üst boşluk — scroll için */}
           <div style={{ height: ITEM_H }} />
           {items.map((item) => (
             <div
@@ -103,7 +102,6 @@ function DrumScroller({ items, selected, onChange, label }: DrumProps) {
               {item}
             </div>
           ))}
-          {/* Alt boşluk — scroll için */}
           <div style={{ height: ITEM_H }} />
         </div>
       </div>
@@ -111,7 +109,7 @@ function DrumScroller({ items, selected, onChange, label }: DrumProps) {
   );
 }
 
-// ── Ana bileşen ──────────────────────────────────────────────
+// ── Ana bileşen ──────────────────────────────────────────────────────────────
 export function TaskForm({ onAdd, onClose, isSubmitting = false }: TaskFormProps) {
   const [title, setTitle] = useState('');
   const [note, setNote] = useState('');
@@ -120,7 +118,6 @@ export function TaskForm({ onAdd, onClose, isSubmitting = false }: TaskFormProps
   const [showReminder, setShowReminder] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Varsayılan: şu andan 1 saat sonra, 5'e yuvarla
   const defaultHour = () => {
     const d = new Date();
     d.setHours(d.getHours() + 1, 0, 0, 0);
@@ -135,12 +132,10 @@ export function TaskForm({ onAdd, onClose, isSubmitting = false }: TaskFormProps
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Çift gönderim & boş başlık koruımaları
     if (!title.trim() || isSubmitting) return;
 
     let reminder_time: string | null = null;
     if (showReminder) {
-      // Bugünün tarihiyle seçilen saati birleştir
       const now = new Date();
       const chosen = new Date(
         now.getFullYear(),
@@ -151,7 +146,6 @@ export function TaskForm({ onAdd, onClose, isSubmitting = false }: TaskFormProps
         0,
         0
       );
-      // Eğer geçmişte kaldıysa yarına al
       if (chosen <= now) chosen.setDate(chosen.getDate() + 1);
       reminder_time = chosen.toISOString();
     }
@@ -162,7 +156,7 @@ export function TaskForm({ onAdd, onClose, isSubmitting = false }: TaskFormProps
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
-      {/* Backdrop — submitting sırasında kapanmayı engelle */}
+      {/* Backdrop */}
       <div
         className="absolute inset-0 backdrop-blur-sm"
         style={{ background: 'var(--overlay)' }}
@@ -171,29 +165,36 @@ export function TaskForm({ onAdd, onClose, isSubmitting = false }: TaskFormProps
 
       {/* Sheet */}
       <div
-        className="relative w-full max-w-sm border rounded-t-3xl p-5 pb-8 animate-slide-up shadow-2xl transition-colors duration-300"
-        style={{ background: 'var(--sheet-bg)', borderColor: 'var(--border-strong)' }}
+        className="relative w-full max-w-sm border rounded-t-3xl pt-5 px-5 animate-slide-up shadow-2xl transition-colors duration-300 select-none"
+        style={{
+          background: 'var(--sheet-bg)',
+          borderColor: 'var(--border-strong)',
+          boxShadow: '0 -20px 60px rgba(0,0,0,0.5)',
+          /* ✅ pb-safe: home indicator için kritik */
+          paddingBottom: 'calc(2rem + env(safe-area-inset-bottom, 0px))',
+        }}
       >
-        {/* Handle */}
+        {/* Handle bar */}
         <div
           className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full"
-          style={{ background: 'var(--surface)' }}
+          style={{ background: 'var(--border-strong)' }}
         />
 
         {/* Header */}
-        <div className="flex items-center justify-between mt-3 mb-5">
-          <h2 className="text-app-primary text-lg font-bold">Yeni Görev</h2>
+        <div className="flex items-center justify-between mt-2 mb-5">
+          <h2 className="text-app-primary text-lg font-bold tracking-tight">Yeni Görev</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full flex items-center justify-center text-app-secondary hover:text-app-primary transition-colors active:scale-90"
-            style={{ background: 'var(--surface)' }}
+            style={{ background: 'var(--surface-2)' }}
+            aria-label="Kapat"
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Title */}
+          {/* Title input */}
           <input
             ref={inputRef}
             type="text"
@@ -201,16 +202,25 @@ export function TaskForm({ onAdd, onClose, isSubmitting = false }: TaskFormProps
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Görev başlığı..."
             maxLength={120}
-            className="w-full rounded-xl px-4 py-3.5 text-app-primary text-sm placeholder-app-muted outline-none focus:ring-1 focus:ring-violet-500/30 transition-all"
+            className="select-text w-full rounded-2xl px-4 py-3.5 text-app-primary text-sm placeholder-app-muted outline-none transition-all duration-200"
             style={{
               background: 'var(--input-bg)',
-              border: '1px solid var(--border-strong)',
+              border: '1.5px solid var(--border-strong)',
+              fontFamily: 'inherit',
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = 'rgba(124,58,237,0.55)';
+              e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.10)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = 'var(--border-strong)';
+              e.target.style.boxShadow = 'none';
             }}
           />
 
           {/* Priority selector */}
           <div>
-            <p className="text-app-muted text-xs font-medium mb-2 px-1">Öncelik</p>
+            <p className="text-app-muted text-xs font-semibold mb-2.5 px-0.5 uppercase tracking-wide">Öncelik</p>
             <div className="flex gap-2">
               {PRIORITIES.map((p) => {
                 const cfg = PRIORITY_CONFIG[p];
@@ -221,14 +231,18 @@ export function TaskForm({ onAdd, onClose, isSubmitting = false }: TaskFormProps
                     type="button"
                     onClick={() => setPriority(p)}
                     className={`
-                      flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 active:scale-95
+                      flex-1 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 active:scale-[0.96]
                       flex items-center justify-center gap-1.5
                       ${active
-                        ? `${cfg.badgeBg} ${cfg.badgeText} border-2 ${cfg.borderColor} shadow-sm`
-                        : 'text-app-muted border'
+                        ? `${cfg.badgeBg} ${cfg.badgeText}`
+                        : 'text-app-muted'
                       }
                     `}
-                    style={!active ? { background: 'var(--surface)', borderColor: 'var(--border-strong)' } : {}}
+                    style={
+                      active
+                        ? { border: `1.5px solid ${getPriorityBorderColor(p)}`, boxShadow: `0 4px 12px ${getPriorityGlow(p)}` }
+                        : { background: 'var(--surface)', border: '1.5px solid var(--border-strong)' }
+                    }
                   >
                     <span
                       className={`w-2 h-2 rounded-full ${active ? cfg.dotColor : ''}`}
@@ -241,41 +255,39 @@ export function TaskForm({ onAdd, onClose, isSubmitting = false }: TaskFormProps
             </div>
           </div>
 
-          {/* ── Hatırlatıcı toggle ── */}
+          {/* Hatırlatıcı toggle */}
           <button
             type="button"
             id="reminder-toggle-btn"
             onClick={() => setShowReminder(!showReminder)}
-            className="w-full flex items-center gap-2 text-app-muted text-xs py-1 hover:text-app-secondary transition-colors"
+            className="w-full flex items-center gap-2.5 text-app-secondary text-xs py-2.5 px-3.5 rounded-2xl transition-all duration-200 active:scale-[0.98]"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)' }}
           >
             {showReminder
-              ? <Bell size={13} className="text-violet-400" />
-              : <BellOff size={13} />
+              ? <Bell size={13} className="text-violet-400 flex-shrink-0" />
+              : <BellOff size={13} className="flex-shrink-0" />
             }
-            {showReminder ? 'Hatırlatıcı ayarlandı — değiştir' : 'Hatırlatıcı ekle (saat & dakika)'}
+            <span className={showReminder ? 'text-violet-400 font-semibold' : ''}>
+              {showReminder ? `Hatırlatıcı: ${selHour}:${selMinute}` : 'Hatırlatıcı ekle'}
+            </span>
             <ChevronDown
               size={13}
               className={`ml-auto transition-transform duration-200 ${showReminder ? 'rotate-180' : ''}`}
             />
           </button>
 
-          {/* ── Drum Picker ── */}
+          {/* Drum Picker */}
           {showReminder && (
             <div
-              className="rounded-2xl p-4 border transition-colors duration-300"
+              className="rounded-2xl p-4 border transition-colors duration-300 animate-fade-in"
               style={{ background: 'var(--input-bg)', borderColor: 'var(--border)' }}
             >
-              <p className="text-app-muted text-[10px] font-semibold uppercase tracking-widest text-center mb-3">
+              <p className="text-app-muted text-[10px] font-bold uppercase tracking-widest text-center mb-3">
                 Bildirim Saati
               </p>
 
               <div className="flex items-center justify-center gap-2">
-                <DrumScroller
-                  items={HOURS}
-                  selected={selHour}
-                  onChange={setSelHour}
-                  label="Saat"
-                />
+                <DrumScroller items={HOURS} selected={selHour} onChange={setSelHour} label="Saat" />
 
                 {/* Ayırıcı */}
                 <div className="flex flex-col items-center gap-3 pt-6">
@@ -283,32 +295,20 @@ export function TaskForm({ onAdd, onClose, isSubmitting = false }: TaskFormProps
                   <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
                 </div>
 
-                <DrumScroller
-                  items={MINUTES}
-                  selected={selMinute}
-                  onChange={setSelMinute}
-                  label="Dakika"
-                />
-              </div>
-
-              {/* Özet */}
-              <div className="mt-3 flex items-center justify-center gap-2">
-                <Bell size={12} className="text-violet-400" />
-                <p className="text-violet-400 text-xs font-semibold">
-                  {selHour}:{selMinute} hatırlatıcı
-                </p>
+                <DrumScroller items={MINUTES} selected={selMinute} onChange={setSelMinute} label="Dakika" />
               </div>
             </div>
           )}
 
-          {/* Note toggle */}
+          {/* Not toggle */}
           <button
             type="button"
             onClick={() => setShowNote(!showNote)}
-            className="w-full flex items-center gap-2 text-app-muted text-xs py-1 hover:text-app-secondary transition-colors"
+            className="w-full flex items-center gap-2.5 text-app-secondary text-xs py-2.5 px-3.5 rounded-2xl transition-all duration-200 active:scale-[0.98]"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border-strong)' }}
           >
-            <StickyNote size={13} />
-            {showNote ? 'Notu gizle' : 'Not ekle (isteğe bağlı)'}
+            <StickyNote size={13} className="flex-shrink-0" />
+            <span>{showNote ? 'Notu gizle' : 'Not ekle (isteğe bağlı)'}</span>
             <ChevronUp
               size={13}
               className={`ml-auto transition-transform duration-200 ${showNote ? '' : 'rotate-180'}`}
@@ -322,10 +322,19 @@ export function TaskForm({ onAdd, onClose, isSubmitting = false }: TaskFormProps
               placeholder="Not ekle..."
               rows={3}
               maxLength={500}
-              className="w-full rounded-xl px-4 py-3 text-app-primary text-sm placeholder-app-muted outline-none focus:ring-1 focus:ring-violet-500/30 transition-all resize-none"
+              className="select-text w-full rounded-2xl px-4 py-3 text-app-primary text-sm placeholder-app-muted outline-none transition-all duration-200 resize-none animate-fade-in"
               style={{
                 background: 'var(--input-bg)',
-                border: '1px solid var(--border-strong)',
+                border: '1.5px solid var(--border-strong)',
+                fontFamily: 'inherit',
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = 'rgba(124,58,237,0.55)';
+                e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.10)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = 'var(--border-strong)';
+                e.target.style.boxShadow = 'none';
               }}
             />
           )}
@@ -334,15 +343,22 @@ export function TaskForm({ onAdd, onClose, isSubmitting = false }: TaskFormProps
           <button
             type="submit"
             disabled={!title.trim() || isSubmitting}
-            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-violet-600 to-violet-500 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30"
+            className="w-full py-4 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+              boxShadow: title.trim() && !isSubmitting
+                ? '0 10px 30px rgba(124,58,237,0.40), 0 0 0 1px rgba(124,58,237,0.15)'
+                : 'none',
+            }}
           >
             {isSubmitting
               ? <Loader2 size={18} className="animate-spin" />
-              : <Plus size={18} />}
+              : <Plus size={18} strokeWidth={2.5} />
+            }
             {isSubmitting ? 'Ekleniyor...' : 'Görevi Ekle'}
             {!isSubmitting && showReminder && (
               <span className="text-violet-200 font-normal text-xs ml-1">
-                &middot; {selHour}:{selMinute}
+                · {selHour}:{selMinute}
               </span>
             )}
           </button>
@@ -350,4 +366,22 @@ export function TaskForm({ onAdd, onClose, isSubmitting = false }: TaskFormProps
       </div>
     </div>
   );
+}
+
+// ── Yardımcılar ──────────────────────────────────────────────────────────────
+
+function getPriorityBorderColor(priority: Priority): string {
+  switch (priority) {
+    case 'high':   return 'rgba(239,68,68,0.50)';
+    case 'medium': return 'rgba(245,158,11,0.50)';
+    default:       return 'rgba(34,197,94,0.50)';
+  }
+}
+
+function getPriorityGlow(priority: Priority): string {
+  switch (priority) {
+    case 'high':   return 'rgba(239,68,68,0.15)';
+    case 'medium': return 'rgba(245,158,11,0.15)';
+    default:       return 'rgba(34,197,94,0.15)';
+  }
 }

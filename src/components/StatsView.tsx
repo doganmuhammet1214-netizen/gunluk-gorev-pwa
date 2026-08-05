@@ -17,15 +17,25 @@ export function StatsView({ stats }: StatsViewProps) {
   const offset = circumference - (stats.completionRate / 100) * circumference;
 
   return (
-    <div className="px-4 pb-4">
-      {/* Circular progress */}
+    <div className="px-4 pb-4 space-y-3">
+      {/* Circular progress card */}
       <div
-        className="border rounded-3xl p-6 mb-4 flex flex-col items-center transition-colors duration-300"
+        className="border rounded-3xl p-6 flex flex-col items-center transition-colors duration-300"
         style={{ background: 'var(--surface-alt)', borderColor: 'var(--border)' }}
       >
-        <div className="relative w-36 h-36 mb-4">
+        <div className="relative w-40 h-40 mb-4">
+          {/* Glow halo */}
+          <div
+            className="absolute inset-4 rounded-full opacity-20"
+            style={{
+              background: 'radial-gradient(circle, rgba(124,58,237,0.8) 0%, transparent 70%)',
+              filter: 'blur(12px)',
+            }}
+          />
           <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--surface)" strokeWidth="8" />
+            {/* Track */}
+            <circle cx="60" cy="60" r={radius} fill="none" stroke="var(--surface-2)" strokeWidth="8" />
+            {/* Progress */}
             <circle
               cx="60"
               cy="60"
@@ -39,76 +49,96 @@ export function StatsView({ stats }: StatsViewProps) {
               className="transition-all duration-700 ease-out"
             />
             <defs>
-              <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#7c3aed" />
-                <stop offset="100%" stopColor="#a78bfa" />
+              <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#a78bfa" />
+                <stop offset="100%" stopColor="#7c3aed" />
               </linearGradient>
             </defs>
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <p className="text-app-primary text-3xl font-bold">{stats.completionRate}%</p>
-            <p className="text-app-muted text-xs">Tamamlama</p>
+            <p className="text-app-primary text-3xl font-bold tracking-tight">{stats.completionRate}%</p>
+            <p className="text-app-muted text-xs font-semibold mt-0.5">Tamamlama</p>
           </div>
         </div>
-        <p className="text-app-secondary text-sm text-center">
+        <p className="text-app-secondary text-sm text-center font-medium">
           {stats.total > 0
             ? `${stats.completed} / ${stats.total} görev tamamlandı`
             : 'Henüz görev eklenmedi'}
         </p>
+
+        {/* Mini progress bar */}
+        {stats.total > 0 && (
+          <div className="w-full mt-4 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+            <div
+              className="h-full rounded-full transition-all duration-700 ease-out"
+              style={{
+                width: `${stats.completionRate}%`,
+                background: 'linear-gradient(90deg, #7c3aed, #a78bfa)',
+              }}
+            />
+          </div>
+        )}
       </div>
 
-      {/* Stat cards */}
+      {/* Stat cards — 2x2 grid */}
       <div className="grid grid-cols-2 gap-3">
         <StatCard
           icon={<Clock size={18} className="text-violet-400" />}
-          bgColor="bg-violet-500/10"
+          iconBg="rgba(124,58,237,0.15)"
           label="Bekleyen"
           value={stats.active}
           sub="görev"
+          accentColor="#7c3aed"
         />
         <StatCard
           icon={<CheckCircle2 size={18} className="text-emerald-400" />}
-          bgColor="bg-emerald-500/10"
+          iconBg="rgba(16,185,129,0.15)"
           label="Tamamlanan"
           value={stats.completed}
           sub="görev"
+          accentColor="#10b981"
         />
         <StatCard
           icon={<Flame size={18} className="text-rose-400" />}
-          bgColor="bg-rose-500/10"
+          iconBg="rgba(239,68,68,0.15)"
           label="Yüksek Öncelik"
           value={stats.highPriority}
           sub="bekliyor"
+          accentColor="#ef4444"
         />
         <StatCard
           icon={<Target size={18} className="text-amber-400" />}
-          bgColor="bg-amber-500/10"
+          iconBg="rgba(245,158,11,0.15)"
           label="Toplam"
           value={stats.total}
           sub="görev"
+          accentColor="#f59e0b"
         />
       </div>
 
       {/* Priority breakdown */}
       {stats.total > 0 && (
         <div
-          className="mt-4 border rounded-3xl p-5 transition-colors duration-300"
+          className="border rounded-3xl p-5 transition-colors duration-300"
           style={{ background: 'var(--surface-alt)', borderColor: 'var(--border)' }}
         >
-          <h3 className="text-app-primary text-sm font-semibold mb-4 flex items-center gap-2">
+          <h3 className="text-app-primary text-sm font-bold mb-4 flex items-center gap-2">
             <TrendingUp size={15} className="text-violet-400" />
             Öncelik Dağılımı
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-3.5">
             {(['high', 'medium', 'low'] as const).map((p) => {
               const cfg = PRIORITY_CONFIG[p];
               return (
                 <div key={p} className="flex items-center gap-3">
-                  <span className={`text-xs font-medium w-12 ${cfg.textColor}`}>{cfg.label}</span>
-                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface)' }}>
-                    <div className={`h-full ${cfg.color} rounded-full transition-all duration-700`} style={{ width: '30%' }} />
+                  <span className={`text-xs font-semibold w-14 ${cfg.textColor}`}>{cfg.label}</span>
+                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'var(--surface-2)' }}>
+                    <div
+                      className={`h-full ${cfg.color} rounded-full transition-all duration-700`}
+                      style={{ width: '30%' }}
+                    />
                   </div>
-                  <span className="text-app-faint text-xs w-8 text-right">-</span>
+                  <span className="text-app-muted text-xs font-medium w-6 text-right">-</span>
                 </div>
               );
             })}
@@ -119,26 +149,32 @@ export function StatsView({ stats }: StatsViewProps) {
   );
 }
 
+// ── StatCard sub-bileşeni ────────────────────────────────────────────────────
+
 type StatCardProps = {
   icon: React.ReactNode;
-  bgColor: string;
+  iconBg: string;
   label: string;
   value: number;
   sub: string;
+  accentColor: string;
 };
 
-function StatCard({ icon, bgColor, label, value, sub }: StatCardProps) {
+function StatCard({ icon, iconBg, label, value, sub, accentColor }: StatCardProps) {
   return (
     <div
-      className="border rounded-2xl p-4 transition-colors duration-300"
+      className="border rounded-2xl p-4 transition-all duration-200 active:scale-[0.97]"
       style={{ background: 'var(--surface-alt)', borderColor: 'var(--border)' }}
     >
-      <div className={`w-9 h-9 rounded-xl ${bgColor} flex items-center justify-center mb-3`}>
+      <div
+        className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
+        style={{ background: iconBg }}
+      >
         {icon}
       </div>
-      <p className="text-app-primary text-2xl font-bold">{value}</p>
-      <p className="text-app-muted text-xs mt-0.5">{label}</p>
-      <p className="text-app-faint text-[10px]">{sub}</p>
+      <p className="text-app-primary text-2xl font-bold tracking-tight leading-none">{value}</p>
+      <p className="text-app-secondary text-xs font-semibold mt-1">{label}</p>
+      <p className="text-xs font-medium mt-0.5" style={{ color: accentColor, opacity: 0.7 }}>{sub}</p>
     </div>
   );
 }

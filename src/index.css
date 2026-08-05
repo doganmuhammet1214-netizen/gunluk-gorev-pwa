@@ -8,64 +8,57 @@
 /* ── Karanlık Tema (varsayılan) ─────────────────────────────── */
 :root,
 [data-theme="dark"] {
-  --bg: #020617;
-  /* slate-950 */
-  --bg-2: #0f172a;
-  /* slate-900 */
-  --surface: #1e293b;
-  /* slate-800 */
-  --surface-alt: rgba(30, 41, 59, 0.70);
-  /* slate-800/70 */
-  --border: rgba(51, 65, 85, 0.50);
-  /* slate-700/50 */
-  --border-strong: rgba(51, 65, 85, 0.80);
-  /* slate-700/80 */
+  --bg:          #0a0f1e;   /* koyu lacivert — premium dark */
+  --bg-2:        #0f172a;   /* slate-900 */
+  --surface:     #1a2235;   /* slate-850 benzeri */
+  --surface-2:   #1e293b;   /* slate-800 */
+  --surface-alt: rgba(26, 34, 53, 0.80);
+  --border:      rgba(51, 65, 85, 0.40);
+  --border-strong: rgba(71, 85, 105, 0.60);
 
-  --text-primary: #f8fafc;
-  /* slate-50  */
-  --text-secondary: #94a3b8;
-  /* slate-400 */
-  --text-muted: #475569;
-  /* slate-500 */
-  --text-faint: #334155;
-  /* slate-700 */
+  --text-primary:   #f0f4ff;   /* soft white */
+  --text-secondary: #94a3b8;   /* slate-400 */
+  --text-muted:     #475569;   /* slate-600 */
+  --text-faint:     #2d3d54;   /* slate-750 benzeri */
 
-  --nav-bg: rgba(15, 23, 42, 0.95);
-  /* slate-900/95 */
-  --input-bg: rgba(30, 41, 59, 0.80);
-  /* slate-800/80 */
-  --sheet-bg: #0f172a;
-  /* slate-900 */
-  --overlay: rgba(0, 0, 0, 0.60);
+  --nav-bg:    rgba(10, 15, 30, 0.96);
+  --input-bg:  rgba(26, 34, 53, 0.90);
+  --sheet-bg:  #0f172a;
+  --overlay:   rgba(0, 0, 0, 0.70);
 
+  --primary:       #7c3aed;   /* violet-600 */
+  --primary-light: #8b5cf6;   /* violet-500 */
+  --primary-dim:   rgba(124, 58, 237, 0.12);
+  --primary-glow:  rgba(124, 58, 237, 0.30);
+
+  --safe-area-top:    env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* ── Aydınlık Tema ──────────────────────────────────────────── */
 [data-theme="light"] {
-  --bg: #f1f5f9;
-  /* slate-100 */
-  --bg-2: #e2e8f0;
-  /* slate-200 */
-  --surface: #ffffff;
-  --surface-alt: rgba(255, 255, 255, 0.80);
-  --border: rgba(148, 163, 184, 0.40);
-  /* slate-400/40 */
-  --border-strong: rgba(148, 163, 184, 0.60);
+  --bg:          #f0f4ff;   /* hafif mavi-gri — daha taze */
+  --bg-2:        #e2e8f0;   /* slate-200 */
+  --surface:     #ffffff;
+  --surface-2:   #f8fafc;
+  --surface-alt: rgba(255, 255, 255, 0.90);
+  --border:      rgba(148, 163, 184, 0.35);
+  --border-strong: rgba(148, 163, 184, 0.55);
 
-  --text-primary: #0f172a;
-  /* slate-900 */
-  --text-secondary: #475569;
-  /* slate-500 */
-  --text-muted: #94a3b8;
-  /* slate-400 */
-  --text-faint: #cbd5e1;
-  /* slate-300 */
+  --text-primary:   #0f172a;   /* slate-900 */
+  --text-secondary: #475569;   /* slate-500 */
+  --text-muted:     #94a3b8;   /* slate-400 */
+  --text-faint:     #cbd5e1;   /* slate-300 */
 
-  --nav-bg: rgba(255, 255, 255, 0.95);
-  --input-bg: rgba(241, 245, 249, 0.90);
-  --sheet-bg: #ffffff;
-  --overlay: rgba(0, 0, 0, 0.40);
+  --nav-bg:    rgba(255, 255, 255, 0.96);
+  --input-bg:  rgba(248, 250, 252, 0.95);
+  --sheet-bg:  #ffffff;
+  --overlay:   rgba(0, 0, 0, 0.45);
+
+  --primary:       #6d28d9;
+  --primary-light: #7c3aed;
+  --primary-dim:   rgba(109, 40, 217, 0.10);
+  --primary-glow:  rgba(109, 40, 217, 0.20);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -75,6 +68,7 @@
 * {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
+  box-sizing: border-box;
 }
 
 html,
@@ -85,7 +79,7 @@ body {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--text-primary);
@@ -96,46 +90,106 @@ body {
    ══════════════════════════════════════════════════════════════ */
 
 /* Arkaplanlar */
-.bg-app {
-  background-color: var(--bg);
-}
-
-.bg-app-2 {
-  background-color: var(--bg-2);
-}
-
-.bg-surface {
-  background-color: var(--surface);
-}
-
-.bg-surface-alt {
-  background-color: var(--surface-alt);
-}
+.bg-app        { background-color: var(--bg); }
+.bg-app-2      { background-color: var(--bg-2); }
+.bg-surface    { background-color: var(--surface); }
+.bg-surface-2  { background-color: var(--surface-2); }
+.bg-surface-alt { background-color: var(--surface-alt); }
 
 /* Metinler */
-.text-app-primary {
-  color: var(--text-primary);
-}
-
-.text-app-secondary {
-  color: var(--text-secondary);
-}
-
-.text-app-muted {
-  color: var(--text-muted);
-}
-
-.text-app-faint {
-  color: var(--text-faint);
-}
+.text-app-primary   { color: var(--text-primary); }
+.text-app-secondary { color: var(--text-secondary); }
+.text-app-muted     { color: var(--text-muted); }
+.text-app-faint     { color: var(--text-faint); }
 
 /* Kenarlıklar */
-.border-app {
-  border-color: var(--border);
+.border-app        { border-color: var(--border); }
+.border-app-strong { border-color: var(--border-strong); }
+
+/* ══════════════════════════════════════════════════════════════
+   iOS SAFE AREA YARDIMCILARI
+   ══════════════════════════════════════════════════════════════ */
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
-.border-app-strong {
-  border-color: var(--border-strong);
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pt-safe-14 {
+  padding-top: calc(3.5rem + env(safe-area-inset-top, 0px));
+}
+
+.safe-area-bottom {
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* ══════════════════════════════════════════════════════════════
+   REUSABLE BILEŞEN CLASS'LARI
+   ══════════════════════════════════════════════════════════════ */
+
+/* Primary buton */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border-radius: 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  box-shadow: 0 8px 24px var(--primary-glow);
+  transition: all 0.2s ease;
+}
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+/* Ghost buton */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  transition: all 0.15s ease;
+}
+.btn-ghost:active { transform: scale(0.96); }
+
+/* Standart input */
+.input-base {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border-radius: 0.875rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: 1px solid var(--border-strong);
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+.input-base::placeholder { color: var(--text-muted); }
+.input-base:focus {
+  border-color: rgba(124, 58, 237, 0.50);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+/* Glass efekti */
+.glass {
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -153,13 +207,6 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   iOS SAFE AREA
-   ══════════════════════════════════════════════════════════════ */
-.safe-area-bottom {
-  padding-bottom: calc(0.5rem + var(--safe-area-bottom));
-}
-
-/* ══════════════════════════════════════════════════════════════
    ANİMASYONLAR
    ══════════════════════════════════════════════════════════════ */
 
@@ -168,7 +215,6 @@ body {
     transform: translateY(100%);
     opacity: 0;
   }
-
   to {
     transform: translateY(0);
     opacity: 1;
@@ -176,19 +222,37 @@ body {
 }
 
 .animate-slide-up {
-  animation: slide-up 0.32s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  animation: slide-up 0.34s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.92) translateY(-6px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 @keyframes task-in {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.97);
+    transform: translateY(10px) scale(0.97);
   }
-
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+.animate-task-in {
+  animation: task-in 0.28s ease-out forwards;
 }
 
 @keyframes fade-in {
@@ -196,7 +260,6 @@ body {
     opacity: 0;
     transform: translateY(-6px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -207,23 +270,31 @@ body {
   animation: fade-in 0.28s ease-out forwards;
 }
 
+/* Float animasyonu — EmptyState için */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+.animate-float {
+  animation: float 3.5s ease-in-out infinite;
+}
+
 /* Tema geçiş animasyonu */
 @keyframes theme-spin {
-  from {
-    transform: rotate(0deg) scale(1);
-  }
-
-  50% {
-    transform: rotate(180deg) scale(0.8);
-  }
-
-  to {
-    transform: rotate(360deg) scale(1);
-  }
+  from  { transform: rotate(0deg) scale(1); }
+  50%   { transform: rotate(180deg) scale(0.8); }
+  to    { transform: rotate(360deg) scale(1); }
 }
 
 .animate-theme-toggle {
   animation: theme-spin 0.4s ease-in-out;
+}
+
+/* Shimmer / glow pulse */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 16px var(--primary-glow); }
+  50%       { box-shadow: 0 0 28px var(--primary-glow), 0 0 8px rgba(124,58,237,0.15); }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -239,10 +310,8 @@ body {
    iOS ZOOM ENGELİ
    iOS Safari, font-size < 16px olan input/select/textarea
    elemanlarına odaklanıldığında otomatik zoom yapar.
-   Bu kural tüm form elemanlarını 16px'e sabitleyerek bunu engeller.
    ══════════════════════════════════════════════════════════════ */
 @media screen and (max-width: 768px) {
-
   input,
   select,
   textarea {
