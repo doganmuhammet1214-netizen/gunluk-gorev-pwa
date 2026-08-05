@@ -5,9 +5,11 @@ import { TaskForm } from './components/TaskForm';
 import { BottomNav } from './components/BottomNav';
 import { StatsView } from './components/StatsView';
 import { NotificationBanner } from './components/NotificationBanner';
+import { AuthScreen } from './components/AuthScreen';
 import { useTasks } from './hooks/useTasks';
 import { useNotifications } from './hooks/useNotifications';
 import { useTheme } from './hooks/useTheme';
+import { useAuth } from './hooks/useAuth';
 import type { Tab } from './types';
 import { Plus, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 
@@ -16,6 +18,12 @@ function App() {
   const [showForm, setShowForm] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const { theme, toggleTheme } = useTheme();
+
+  // ─── Auth ──────────────────────────────────────────────────────────────────
+  const { session, user, loading: authLoading, authLoading: authProcessing, authError, clearError, signIn, signUp, signOut } = useAuth();
+
+  // ─── Görev hook'u — yalnızca session varken aktif ──────────────────────────
+  const userId = user?.id ?? '';
   const {
     activeTasks,
     completedTasks,
@@ -28,9 +36,9 @@ function App() {
     deleteTask,
     clearCompleted,
     refetch,
-  } = useTasks();
+  } = useTasks({ userId });
 
-  const { permission, status: notifStatus, subscribe } = useNotifications();
+  const { permission, status: notifStatus, subscribe } = useNotifications({ userId: user?.id ?? null });
 
   // Abonelik işlemi pushSubscription.ts içinde Supabase kaydını otomatik yapar.
   // iOS: Bu callback doğrudan bir onClick handler'ına bağlanmalıdır.
@@ -52,6 +60,43 @@ function App() {
     // Hata gösterilirse 4 saniye sonra kaybolur (isteğe bağlı)
   }, [error]);
 
+  // ── Auth durumu henüz bilinmiyor → splash ──────────────────────────────────
+  if (authLoading) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: 'var(--bg)' }}
+      >
+        <div className="flex flex-col items-center gap-4">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{
+              background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+              boxShadow: '0 8px 32px rgba(124,58,237,0.35)',
+            }}
+          >
+            <Loader2 size={28} className="text-white animate-spin" />
+          </div>
+          <p className="text-app-secondary text-sm">Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Oturum açılmamış → giriş/kayıt ekranı ────────────────────────────────
+  if (!session) {
+    return (
+      <AuthScreen
+        onSignIn={signIn}
+        onSignUp={signUp}
+        authLoading={authProcessing}
+        authError={authError}
+        clearError={clearError}
+      />
+    );
+  }
+
+  // ── Oturum açık → ana uygulama ────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-app flex items-center justify-center transition-colors duration-300">
       {/* Mobile frame */}
@@ -90,6 +135,8 @@ function App() {
               completedCount={completedTasks.length}
               theme={theme}
               onToggleTheme={toggleTheme}
+              userEmail={user?.email ?? ''}
+              onSignOut={() => void signOut()}
             />
           )}
 
@@ -172,3 +219,4 @@ function App() {
 }
 
 export default App;
+

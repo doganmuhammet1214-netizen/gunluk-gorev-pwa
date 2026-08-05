@@ -31,8 +31,13 @@ type UseTasksReturn = {
   refetch: () => Promise<void>;
 };
 
+type UseTasksOptions = {
+  /** Supabase auth user id. Görevler yalnızca bu kullanıcıya filtrelenir. */
+  userId: string;
+};
+
 // ─── Hook ────────────────────────────────────────────────────
-export function useTasks(): UseTasksReturn {
+export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState<LoadingState>('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,6 +53,7 @@ export function useTasks(): UseTasksReturn {
       const { data, error: fetchError } = await supabase
         .from('tasks')
         .select('*')
+        .eq('user_id', userId)            // ← Yalnızca bu kullanıcının görevleri
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
@@ -59,18 +65,20 @@ export function useTasks(): UseTasksReturn {
       setLoading('error');
       console.error('[useTasks] fetchTasks:', err);
     }
-  }, []);
+  }, [userId]);  // userId değişince fetchTasks yeniden oluşur
 
   // ── İlk yüklemede + realtime için ──────────────────────────
   useEffect(() => {
+    setTasks([]);  // Kullanıcı değişince eski görevleri temizle
     void fetchTasks();
 
     // Realtime subscription — başka sekmeden/cihazdan değişiklik gelirse anında güncelle
+    // filter: yalnızca bu kullanıcının görevlerini dinle
     const channel = supabase
-      .channel('tasks-realtime')
+      .channel(`tasks-realtime-${userId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'tasks' },
+        { event: '*', schema: 'public', table: 'tasks', filter: `user_id=eq.${userId}` },
         (payload) => {
           if (payload.eventType === 'INSERT') {
             // Optimistic update ile çakışmayı önle:
@@ -133,7 +141,7 @@ export function useTasks(): UseTasksReturn {
         priority:     optimisticTask.priority,
         completed:    false,
         completed_at: null,
-        user_id:      null,
+        user_id:      userId,   // ← Aktif kullanıcı ID'si
       };
 
       // reminder_time — tabloda bu sütun varsa ekle

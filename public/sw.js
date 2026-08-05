@@ -5,7 +5,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SW_VERSION = '2.0.0';
-const APP_NAME   = 'Günlük Görev';
+const APP_NAME = 'Günlük Görev';
 
 // ── Install ───────────────────────────────────────────────────────────────────
 self.addEventListener('install', () => {
@@ -37,11 +37,11 @@ self.addEventListener('push', (event) => {
   // Varsayılan bildirim içeriği
   let payload = {
     title: APP_NAME,
-    body:  'Yeni bir hatırlatıcınız var.',
-    icon:  '/icons/icon-192.png',
+    body: 'Yeni bir hatırlatıcınız var.',
+    icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
-    tag:   'gunluk-gorev-reminder',
-    data:  { url: '/' },
+    tag: 'gunluk-gorev-reminder',
+    data: { url: '/' },
   };
 
   // Sunucudan gelen JSON payload'ı ayrıştır
@@ -56,15 +56,15 @@ self.addEventListener('push', (event) => {
   }
 
   const options = {
-    body:               payload.body,
-    icon:               payload.icon,
-    badge:              payload.badge,
-    tag:                payload.tag,
-    data:               payload.data,
+    body: payload.body,
+    icon: payload.icon,
+    badge: payload.badge,
+    tag: payload.tag,
+    data: payload.data,
     requireInteraction: false,
-    silent:             false,
+    silent: false,
     // iOS 16.4+ — vibrasyon desteği
-    vibrate:            [200, 100, 200],
+    vibrate: [200, 100, 200],
   };
 
   event.waitUntil(

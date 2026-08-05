@@ -49,11 +49,16 @@ export interface UseNotificationsReturn {
   unsubscribe: () => Promise<void>;
 }
 
+type UseNotificationsOptions = {
+  /** Supabase auth user id. Push aboneliğine bu id yazılır. */
+  userId: string | null;
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Hook
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function useNotifications(): UseNotificationsReturn {
+export function useNotifications({ userId }: UseNotificationsOptions): UseNotificationsReturn {
   const [permission, setPermission] = useState<NotificationPermission>(
     () => (typeof Notification !== 'undefined' ? Notification.permission : 'default')
   );
@@ -91,8 +96,8 @@ export function useNotifications(): UseNotificationsReturn {
       if (event.data?.type === 'SW_SUBSCRIPTION_RENEWED') {
         const renewed = event.data.subscription as PushSubJSON;
         setSubscription(renewed);
-        // Yenilenen aboneliği Supabase'e de kaydet
-        void savePushSubscriptionToSupabase(renewed, null);
+        // Yenilenen aboneliği Supabase'e de kaydet (userId ile)
+        void savePushSubscriptionToSupabase(renewed, userId);
         console.log('[useNotifications] Abonelik yenilendi:', renewed.endpoint);
       }
     };
@@ -116,7 +121,7 @@ export function useNotifications(): UseNotificationsReturn {
     setError(null);
     setStatus('subscribing');
 
-    const result = await subscribeToPush(null); // userId = null (auth yokken)
+    const result = await subscribeToPush(userId); // Aktif kullanıcı ID'sini yaz
 
     if (result.ok) {
       setSubscription(result.subscription);
