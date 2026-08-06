@@ -47,6 +47,12 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
 
   // ── Görevleri yükle ────────────────────────────────────────
   const fetchTasks = useCallback(async () => {
+    // Geçerli bir UUID yoksa isteği gönderme (400/401 hatalarını önle)
+    if (!userId || userId.trim() === '') {
+      console.warn('[useTasks] fetchTasks: userId henüz hazır değil, istek atlanıyor.');
+      return;
+    }
+
     setLoading('loading');
     setError(null);
     try {
@@ -69,6 +75,13 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
 
   // ── İlk yüklemede + realtime için ──────────────────────────
   useEffect(() => {
+    // Geçerli userId olmadan subscription veya fetch başlatma
+    if (!userId || userId.trim() === '') {
+      setTasks([]);
+      setLoading('idle');
+      return;
+    }
+
     setTasks([]);  // Kullanıcı değişince eski görevleri temizle
     void fetchTasks();
 
@@ -107,10 +120,18 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [fetchTasks]);
+  }, [fetchTasks, userId]);
 
   // ── Görev ekle ──────────────────────────────────────────────
   const addTask = useCallback(async (data: TaskFormData) => {
+    // ── Kullanıcı kimliği kontrolü ─────────────────────────────
+    // userId boş string veya tanımsızsa DB'ye geçersiz UUID göndermemek için dur.
+    if (!userId || userId.trim() === '') {
+      console.error('[useTasks] addTask: Geçerli bir kullanıcı oturumu bulunamadı, görev eklenemiyor.');
+      setError('Görev eklemek için lütfen tekrar giriş yapın.');
+      return;
+    }
+
     // Çift gönderimi önle
     if (isAddingRef.current) return;
     isAddingRef.current = true;
@@ -141,7 +162,7 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
         priority:     optimisticTask.priority,
         completed:    false,
         completed_at: null,
-        user_id:      userId,   // ← Aktif kullanıcı ID'si
+        user_id:      userId,   // ← Aktif kullanıcı ID'si (UUID kontrolü yukarıda yapıldı)
       };
 
       // reminder_time — tabloda bu sütun varsa ekle
@@ -206,7 +227,7 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
       isAddingRef.current = false;
       setIsSubmitting(false);
     }
-  }, []);
+  }, [userId]);  // ← userId bağımlılığı: her zaman güncel ID'yi kullan
 
 
   // ── Görev tamamla / geri al ────────────────────────────────
