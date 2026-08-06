@@ -40,7 +40,10 @@ const messaging = firebase.messaging();
  * }
  */
 messaging.onBackgroundMessage((payload) => {
-  console.log('[FCM-SW] Arka plan mesajı alındı:', payload);
+  // ── DEBUG LOG: Bu satır konsolda görünüyorsa FCM SW çalışıyor demektir ──
+  console.log('[FCM SW] ✅ Bildirim alındı! Payload:', JSON.stringify(payload, null, 2));
+  console.log('[FCM SW] Bildirim tipi:', payload.notification ? 'notification' : 'data-only');
+  console.log('[FCM SW] Data alanı:', payload.data);
 
   const APP_NAME = 'FlowDay';
 

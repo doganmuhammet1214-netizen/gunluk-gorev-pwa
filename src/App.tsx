@@ -12,6 +12,7 @@ import { useTheme } from './hooks/useTheme';
 import { useAuth } from './hooks/useAuth';
 import type { Tab } from './types';
 import { Plus, AlertCircle, RefreshCw, Loader2, BarChart3 } from 'lucide-react';
+import { TestNotificationButton } from './components/TestNotificationButton';
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('tasks');
@@ -171,6 +172,11 @@ function App() {
               onSubscribe={() => void handleSubscribe()}
               onDismiss={() => setBannerDismissed(true)}
             />
+          )}
+
+          {/* ─── Debug: Test Bildirimi Butonu (izin verilmişse göster) ─── */}
+          {permission === 'granted' && (
+            <TestNotificationButton />
           )}
 
           {/* ─── İstatistikler sekme başlığı ─── */}
