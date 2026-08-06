@@ -7,6 +7,8 @@
  *  - subscribeToPush()  → pushSubscription.ts üzerinden VAPID + Supabase
  *  - iOS uyumu: subscribe() fonksiyonu SADECE kullanıcı etkileşimiyle çağrılır
  *  - SW renewal: pushsubscriptionchange mesajını dinler ve Supabase'i günceller
+ *  - checkAndSaveFCMToken(): Uygulama her açıldığında / kullanıcı giriş yaptığında
+ *    arka planda sessizce FCM token'ı kontrol eder ve Supabase'e kaydeder.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -18,7 +20,7 @@ import {
   savePushSubscriptionToSupabase,
   type PushSubJSON,
 } from '../lib/pushSubscription';
-import { getFCMToken, onFCMMessage } from '../lib/firebase';
+import { getFCMToken, onFCMMessage, checkAndSaveFCMToken } from '../lib/firebase';
 
 // ─── Tipler ──────────────────────────────────────────────────────────────────
 
@@ -55,6 +57,79 @@ type UseNotificationsOptions = {
   userId: string | null;
 };
 
+// ─── Toast Yardımcı Fonksiyonu ────────────────────────────────────────────────
+
+/**
+ * Geçici bir hata toast/alert gösterir.
+ * Gerçek bir toast kütüphanesi yoksa basit bir banner oluşturur.
+ *
+ * Projenize react-toastify, sonner, react-hot-toast vb. eklenirse
+ * bu fonksiyon kütüphane çağrısıyla değiştirilebilir.
+ */
+function showFCMErrorToast(message: string): void {
+  try {
+    // Mevcut container varsa tekrar oluşturma
+    const existingToast = document.getElementById('fcm-error-toast');
+    if (existingToast) existingToast.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'fcm-error-toast';
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.style.cssText = [
+      'position:fixed',
+      'bottom:80px',
+      'left:50%',
+      'transform:translateX(-50%)',
+      'max-width:90vw',
+      'width:360px',
+      'background:#1e293b',
+      'color:#f87171',
+      'border:1px solid #ef4444',
+      'border-radius:12px',
+      'padding:12px 16px',
+      'font-size:13px',
+      'line-height:1.5',
+      'z-index:99999',
+      'box-shadow:0 4px 24px rgba(0,0,0,0.4)',
+      'animation:fcmToastIn 0.3s ease',
+    ].join(';');
+
+    // CSS animasyonu
+    if (!document.getElementById('fcm-toast-style')) {
+      const style = document.createElement('style');
+      style.id = 'fcm-toast-style';
+      style.textContent = `
+        @keyframes fcmToastIn {
+          from { opacity:0; transform:translateX(-50%) translateY(12px); }
+          to   { opacity:1; transform:translateX(-50%) translateY(0); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    toast.innerHTML = `
+      <div style="display:flex;align-items:flex-start;gap:10px;">
+        <span style="font-size:18px;flex-shrink:0;">⚠️</span>
+        <div>
+          <strong style="display:block;margin-bottom:2px;color:#fca5a5;">FCM Token Hatası</strong>
+          <span style="color:#94a3b8;">${message}</span>
+        </div>
+        <button onclick="this.closest('#fcm-error-toast').remove()"
+          style="margin-left:auto;background:none;border:none;color:#64748b;cursor:pointer;font-size:16px;padding:0;flex-shrink:0;">✕</button>
+      </div>
+    `;
+
+    document.body.appendChild(toast);
+
+    // 8 saniye sonra otomatik kaldır
+    setTimeout(() => toast.remove(), 8000);
+  } catch (e) {
+    // Toast gösterilemezse en azından console'a yaz
+    console.error('[useNotifications] Toast gösterilemedi:', e);
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Hook
 // ─────────────────────────────────────────────────────────────────────────────
@@ -88,6 +163,19 @@ export function useNotifications({ userId }: UseNotificationsOptions): UseNotifi
       })
       .catch(() => setStatus('idle'));
   }, []);
+
+  // ── Uygulama açıldığında / userId değiştiğinde FCM token'ı arka planda kontrol et ──
+  useEffect(() => {
+    if (!userId) return;
+    if (!isPushSupported()) return;
+
+    // Sessizce arka planda çalışır — bildirim izni yoksa hiçbir şey yapmaz.
+    // Hata oluşursa hem console.error hem toast gösterilir.
+    void checkAndSaveFCMToken(userId, (errMsg) => {
+      console.error('[useNotifications] checkAndSaveFCMToken hatası:', errMsg);
+      showFCMErrorToast(errMsg);
+    });
+  }, [userId]); // userId değişince (giriş/çıkış) yeniden çalışır
 
   // ── SW'den gelen abonelik yenileme mesajını dinle ────────────────────────
   useEffect(() => {
@@ -139,15 +227,25 @@ export function useNotifications({ userId }: UseNotificationsOptions): UseNotifi
 
     // ── 2. Firebase FCM Token ───────────────────────────────────
     // Web Push'tan bağımsız olarak FCM token al ve Supabase'e kaydet.
-    // Hata olsa bile Web Push aboneliğini bloke etme.
+    // userId yoksa token alınır ama kaydedilemez — uyarı verilir.
+    if (!userId) {
+      console.warn('[useNotifications] userId boş — FCM token Supabase\'e kaydedilemeyecek.');
+      showFCMErrorToast('Oturum bilgisi bulunamadı. FCM token kaydedilemedi. Tekrar giriş yapmayı deneyin.');
+      return;
+    }
+
     getFCMToken(userId).then((fcmResult) => {
       if (fcmResult.ok) {
-        console.log('[useNotifications] FCM token kaydedildi.');
+        console.log('[useNotifications] ✅ FCM token kaydedildi.');
       } else {
-        console.warn('[useNotifications] FCM token alınamadı:', fcmResult.message);
+        const errMsg = `FCM token hatası (${fcmResult.reason}): ${fcmResult.message}`;
+        console.error('[useNotifications]', errMsg);
+        showFCMErrorToast(fcmResult.message);
       }
     }).catch((err) => {
-      console.error('[useNotifications] FCM token hatası:', err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error('[useNotifications] FCM token beklenmeyen hata:', err);
+      showFCMErrorToast(`FCM token beklenmeyen hata: ${errMsg}`);
     });
   }, [userId]);
 
@@ -172,7 +270,7 @@ export function useNotifications({ userId }: UseNotificationsOptions): UseNotifi
   useEffect(() => {
     if (!isPushSupported()) return;
 
-    const unsubscribe = onFCMMessage((payload) => {
+    const unsubscribeFCM = onFCMMessage((payload) => {
       console.log('[useNotifications] Ön plan FCM mesajı:', payload);
 
       const title = payload.notification?.title ?? payload.data?.title ?? 'Günlük Görev';
@@ -185,7 +283,7 @@ export function useNotifications({ userId }: UseNotificationsOptions): UseNotifi
       }
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeFCM();
   }, []);
 
   return { permission, status, subscription, error, subscribe, unsubscribe };
