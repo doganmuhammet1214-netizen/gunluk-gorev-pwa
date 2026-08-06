@@ -161,6 +161,94 @@ async function sendFCMNotification(
   return { ok: res.ok, status: res.status, body };
 }
 
+// ─── Service Account Güvenli Parse ─────────────────────────────────────────────────────
+
+type ServiceAccount = { client_email: string; private_key: string };
+type ParseResult =
+  | { ok: true;  value: ServiceAccount }
+  | { ok: false; error: string };
+
+/**
+ * Elle yapıştırılmış JSON stringlerini temizleyip güvenle parse eder.
+ *
+ * Ele alınan sorunlar:
+ *  1. Baş/son boşluklar, tab, newline karakterleri
+ *  2. Tablo escape'i: Supabase Dashboard'a `{"key":"value"}` yapıştırılırsa
+ *     ara sıra \" olarak kaydedilir — bunlar gerçek " haline getirilir.
+ *  3. private_key içindeki \\n (double-escaped) → \n (gerçek newline) dönüştürme
+ *  4. Zorunlu alan eksikliği kontrolü
+ */
+function cleanAndParseServiceAccount(raw: string): ParseResult {
+  if (!raw || raw.trim().length === 0) {
+    return { ok: false, error: "FIREBASE_SERVICE_ACCOUNT boş." };
+  }
+
+  // 1. Baş/son boşlukları temizle
+  let cleaned = raw.trim();
+
+  // 2. Eğer tüm string dış tay nalara (outer quotes) sarılmışsa soy
+  //    Örn: '"{ ... }"' → '{ ... }'
+  if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+    cleaned = cleaned.slice(1, -1);
+  }
+
+  // 3. Kaçışlı tırnakları düz tırnağa çevir (\\ " → ")
+  //    Supabase'in secrets UI'si bazı durumlarda \" olarak kaydeder
+  cleaned = cleaned.replace(/\\"/g, '"');
+
+  // 4. İlk JSON.parse denemesi
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch (firstErr) {
+    // 5. İlk deneme başarısız → \\\\n → \\n (private_key satır sonları) dönüştürüp tekrar dene
+    //    Belleğe yapıştırma sırasında \n, \\n olarak gelebilir
+    const recovered = cleaned.replace(/\\\\n/g, "\\n");
+    try {
+      parsed = JSON.parse(recovered);
+    } catch (secondErr) {
+      // Her iki deneme de başarısız: tanı için ilk hata ve ilk 80 karakteri logla
+      const snippet = cleaned.slice(0, 80).replace(/\n/g, "\\n");
+      console.error(
+        "[parse] İlk deneme hatası:", (firstErr as Error).message,
+        "\n[parse] İkinci deneme hatası:", (secondErr as Error).message,
+        "\n[parse] Raw snippet:", snippet
+      );
+      return {
+        ok: false,
+        error:
+          `FIREBASE_SERVICE_ACCOUNT geçerli JSON değil. ` +
+          `İlk 80 karakter: ${snippet} | ` +
+          `Hata: ${(firstErr as Error).message}`,
+      };
+    }
+  }
+
+  // 6. Zorunlu alanları doğrula
+  const { client_email, private_key } = parsed as Partial<ServiceAccount>;
+
+  if (typeof client_email !== "string" || !client_email.includes("@")) {
+    return {
+      ok: false,
+      error:
+        `FIREBASE_SERVICE_ACCOUNT içinde geçerli 'client_email' alanı bulunamadı. ` +
+        `Mevcut değer: ${JSON.stringify(client_email)}`,
+    };
+  }
+
+  if (typeof private_key !== "string" || !private_key.includes("BEGIN PRIVATE KEY")) {
+    return {
+      ok: false,
+      error:
+        `FIREBASE_SERVICE_ACCOUNT içinde geçerli 'private_key' alanı bulunamadı. ` +
+        `private_key alanı '-----BEGIN PRIVATE KEY-----' ile başlamalıdır.`,
+    };
+  }
+
+  console.log("[parse] ✅ Service account başarıyla parse edildi. client_email:", client_email);
+  return { ok: true, value: { client_email, private_key } };
+}
+
 // ─── Ana Handler ──────────────────────────────────────────────────────────────
 
 Deno.serve(async (req: Request): Promise<Response> => {
@@ -212,17 +300,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   console.log(`[send-test-notification] Test bildirimi isteği: user_id=${user.id}`);
 
-  // ── Service account JSON'u parse et ─────────────────────────────────────
-  let serviceAccount: { client_email: string; private_key: string };
-  try {
-    serviceAccount = JSON.parse(serviceAccountRaw);
-  } catch {
-    console.error("[send-test-notification] FIREBASE_SERVICE_ACCOUNT geçerli JSON değil!");
+  // ── Service account JSON'u temizle ve güvenle parse et ────────────────────
+  const parseResult = cleanAndParseServiceAccount(serviceAccountRaw);
+  if (!parseResult.ok) {
+    console.error("[send-test-notification] Service account parse hatası:", parseResult.error);
     return Response.json(
-      { error: "Sunucu yapılandırma hatası: FIREBASE_SERVICE_ACCOUNT geçerli JSON formatında değil." },
+      {
+        error: `Sunucu yapılandırma hatası: ${parseResult.error}`,
+        hint:  "Supabase Dashboard > Edge Functions > Secrets bölümünde FIREBASE_SERVICE_ACCOUNT değerini güznden geçirin. Değer sıkıştırılmış (minified) JSON olmalıdır.",
+      },
       { status: 500, headers: CORS_HEADERS }
     );
   }
+  const serviceAccount = parseResult.value;
 
   // ── Kullanıcının FCM token'larını çek ───────────────────────────────────
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
