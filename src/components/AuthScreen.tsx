@@ -116,7 +116,7 @@ export function AuthScreen({
           >
             <CheckCircle2 size={32} className="text-white" strokeWidth={2} />
           </div>
-          <h1 className="text-app-primary text-3xl font-bold tracking-tight">Günlük Görev</h1>
+          <h1 className="text-app-primary text-3xl font-bold tracking-tight">FlowDay</h1>
           <p className="text-app-secondary text-sm mt-2 font-medium">
             {mode === 'signin' ? 'Hesabına hoş geldin 👋' : 'Yeni hesap oluştur ✨'}
           </p>

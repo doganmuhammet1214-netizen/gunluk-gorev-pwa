@@ -273,7 +273,7 @@ export function useNotifications({ userId }: UseNotificationsOptions): UseNotifi
     const unsubscribeFCM = onFCMMessage((payload) => {
       console.log('[useNotifications] Ön plan FCM mesajı:', payload);
 
-      const title = payload.notification?.title ?? payload.data?.title ?? 'Günlük Görev';
+      const title = payload.notification?.title ?? payload.data?.title ?? 'FlowDay';
       const body  = payload.notification?.body  ?? payload.data?.body  ?? 'Yeni bir hatırlatıcınız var.';
       const icon  = payload.notification?.icon  ?? '/icons/icon-192.png';
 

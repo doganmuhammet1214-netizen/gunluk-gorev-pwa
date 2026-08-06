@@ -1,6 +1,8 @@
-# React + TypeScript + Vite
+# FlowDay — Kişisel Görev ve Günlük Planlayıcı
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+FlowDay, React + TypeScript + Vite ile geliştirilmiş bir PWA görev yönetim uygulamasıdır.
+Firebase FCM, Supabase ve Web Push bildirimleri ile tam donanımlıdır.
+
 
 Currently, two official plugins are available:
 

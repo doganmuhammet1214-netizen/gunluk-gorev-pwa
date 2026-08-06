@@ -83,7 +83,7 @@ function App() {
             <Loader2 size={30} className="text-white animate-spin" />
           </div>
           <div className="text-center">
-            <p className="text-app-primary font-semibold text-base">Günlük Görev</p>
+            <p className="text-app-primary font-semibold text-base">FlowDay</p>
             <p className="text-app-secondary text-sm mt-0.5">Yükleniyor...</p>
           </div>
         </div>

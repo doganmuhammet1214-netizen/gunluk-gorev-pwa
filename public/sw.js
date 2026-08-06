@@ -1,11 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// sw.js — Günlük Görev PWA Service Worker
+// sw.js — FlowDay PWA Service Worker
 // Arka planda Web Push bildirimleri alır ve tıklamaları yönetir.
 // VitePWA (generateSW) bu dosyayı importScripts ile dahil eder.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SW_VERSION = '2.0.0';
-const APP_NAME = 'Günlük Görev';
+const APP_NAME = 'FlowDay';
 
 // ── Install ───────────────────────────────────────────────────────────────────
 self.addEventListener('install', () => {
@@ -40,7 +40,7 @@ self.addEventListener('push', (event) => {
     body: 'Yeni bir hatırlatıcınız var.',
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
-    tag: 'gunluk-gorev-reminder',
+    tag: 'flowday-reminder',
     data: { url: '/' },
   };
 

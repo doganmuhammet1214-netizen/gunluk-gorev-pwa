@@ -42,7 +42,7 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log('[FCM-SW] Arka plan mesajı alındı:', payload);
 
-  const APP_NAME = 'Günlük Görev';
+  const APP_NAME = 'FlowDay';
 
   // Notification alanından veya data alanından başlık/içerik al
   const notifTitle  = payload.notification?.title  ?? payload.data?.title  ?? APP_NAME;
@@ -54,7 +54,7 @@ messaging.onBackgroundMessage((payload) => {
   const priority    = payload.data?.priority ?? 'normal';
 
   // Priority badge rengi için tag
-  const tag = taskId ? `task-${taskId}` : 'gunluk-gorev-fcm';
+  const tag = taskId ? `task-${taskId}` : 'flowday-fcm';
 
   const notifOptions = {
     body:               notifBody,

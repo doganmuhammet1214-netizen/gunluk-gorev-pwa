@@ -19,9 +19,9 @@ export default defineConfig({
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icons/*.png'],
       manifest: {
-        name: 'Günlük Görev',
-        short_name: 'Görevler',
-        description: 'Kişisel görev yönetim uygulaması',
+        name: 'FlowDay',
+        short_name: 'FlowDay',
+        description: 'FlowDay - Kişisel Görev ve Günlük Planlayıcı',
         theme_color: '#0f172a',
         background_color: '#020617',
         display: 'standalone',
