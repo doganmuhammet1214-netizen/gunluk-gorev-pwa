@@ -49,6 +49,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // firebase-messaging-sw.js Workbox tarafından precache edilmemeli
+        // (FCM kendi SW lifecycle'ını yönetir)
+        globIgnores: ['firebase-messaging-sw.js'],
         // Push bildirimi + notificationclick kodunu üretilen SW'ye dahil et
         importScripts: ['/sw.js'],
         runtimeCaching: [

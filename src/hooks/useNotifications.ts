@@ -18,6 +18,7 @@ import {
   savePushSubscriptionToSupabase,
   type PushSubJSON,
 } from '../lib/pushSubscription';
+import { getFCMToken, onFCMMessage } from '../lib/firebase';
 
 // ─── Tipler ──────────────────────────────────────────────────────────────────
 
@@ -121,19 +122,34 @@ export function useNotifications({ userId }: UseNotificationsOptions): UseNotifi
     setError(null);
     setStatus('subscribing');
 
+    // ── 1. Web Push (VAPID) aboneliği ───────────────────────────────
     const result = await subscribeToPush(userId); // Aktif kullanıcı ID'sini yaz
 
     if (result.ok) {
       setSubscription(result.subscription);
       setStatus('subscribed');
       setPermission('granted');
-      console.log('[useNotifications] Abonelik tamamlandı:', result.subscription.endpoint);
+      console.log('[useNotifications] Web Push aboneliği tamamlandı:', result.subscription.endpoint);
     } else {
       setError(result.message);
       setStatus(result.reason === 'denied' ? 'permission-denied' : 'error');
       if (result.reason === 'denied') setPermission('denied');
+      return; // İzin yoksa FCM de çalışmaz
     }
-  }, []);
+
+    // ── 2. Firebase FCM Token ───────────────────────────────────
+    // Web Push'tan bağımsız olarak FCM token al ve Supabase'e kaydet.
+    // Hata olsa bile Web Push aboneliğini bloke etme.
+    getFCMToken(userId).then((fcmResult) => {
+      if (fcmResult.ok) {
+        console.log('[useNotifications] FCM token kaydedildi.');
+      } else {
+        console.warn('[useNotifications] FCM token alınamadı:', fcmResult.message);
+      }
+    }).catch((err) => {
+      console.error('[useNotifications] FCM token hatası:', err);
+    });
+  }, [userId]);
 
   // ── unsubscribe ───────────────────────────────────────────────────────────
   const unsubscribe = useCallback(async () => {
@@ -148,6 +164,28 @@ export function useNotifications({ userId }: UseNotificationsOptions): UseNotifi
       setError(`Abonelik iptal edilemedi: ${message}`);
       console.error('[useNotifications] unsubscribe hatası:', err);
     }
+  }, []);
+
+  // ── Ön plan FCM mesaj dinleyici ──────────────────────────────
+  // Uygulama açıkken FCM mesajı geldiğinde tarayıcı otomatik bildirim göstermez.
+  // Bu effect, uygulamayi açıkken de bildirim gösterir.
+  useEffect(() => {
+    if (!isPushSupported()) return;
+
+    const unsubscribe = onFCMMessage((payload) => {
+      console.log('[useNotifications] Ön plan FCM mesajı:', payload);
+
+      const title = payload.notification?.title ?? payload.data?.title ?? 'Günlük Görev';
+      const body  = payload.notification?.body  ?? payload.data?.body  ?? 'Yeni bir hatırlatıcınız var.';
+      const icon  = payload.notification?.icon  ?? '/icons/icon-192.png';
+
+      // Ön planda manuel bildirim göster
+      if (Notification.permission === 'granted') {
+        new Notification(title, { body, icon });
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   return { permission, status, subscription, error, subscribe, unsubscribe };
