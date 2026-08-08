@@ -64,8 +64,11 @@ export interface ScheduleResult {
 export async function scheduleTaskReminder(
   params: ScheduleReminderParams
 ): Promise<ScheduleResult> {
-  const qstashUrl   = import.meta.env.VITE_QSTASH_URL   as string | undefined;
-  const qstashToken = import.meta.env.VITE_QSTASH_TOKEN as string | undefined;
+  const rawUrl   = import.meta.env.VITE_QSTASH_URL   as string | undefined;
+  const rawToken = import.meta.env.VITE_QSTASH_TOKEN as string | undefined;
+
+  const qstashUrl   = rawUrl?.replace(/^"|"$/g, '').trim();
+  const qstashToken = rawToken?.replace(/^"|"$/g, '').trim();
 
   // ── Env kontrolü ─────────────────────────────────────────────────────────
   if (!qstashUrl || !qstashToken) {
@@ -199,7 +202,8 @@ export async function scheduleTaskReminder(
  * @param messageId  QStash messageId (scheduleTaskReminder'dan döner)
  */
 export async function cancelTaskReminder(messageId: string): Promise<void> {
-  const qstashToken = import.meta.env.VITE_QSTASH_TOKEN as string | undefined;
+  const rawToken = import.meta.env.VITE_QSTASH_TOKEN as string | undefined;
+  const qstashToken = rawToken?.replace(/^"|"$/g, '').trim();
   if (!qstashToken || !messageId) return;
 
   console.log('[qstash] Mesaj iptal ediliyor:', messageId);

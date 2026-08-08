@@ -211,9 +211,11 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
               );
             } else if (!result.ok) {
               console.error('[useTasks] ❌ QStash zamanlama başarısız:', result.error);
+              setError(`Hatırlatıcı zamanlanamadı: ${result.error}`);
             }
           }).catch((err) => {
             console.error('[useTasks] ❌ QStash zamanlama hatası (beklenmeyen):', err);
+            setError(`Hatırlatıcı zamanlanamadı: ${err instanceof Error ? err.message : String(err)}`);
           });
         }
       }
