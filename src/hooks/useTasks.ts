@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Task, TaskFormData } from '../types';
 import type { Database } from '../lib/supabase';
 import { supabase, rowToTask } from '../lib/supabase';
-import { scheduleTaskReminder } from '../lib/qstash';
+import { scheduleTaskReminder, cancelTaskReminder } from '../lib/qstash';
 
 type TaskInsert = Database['public']['Tables']['tasks']['Insert'];
 type TaskUpdate = Database['public']['Tables']['tasks']['Update'];
@@ -44,6 +44,9 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
   const [error, setError] = useState<string | null>(null);
   // Çift gönderimi önlemek için ref — render'dan bağımsız, anlık flag
   const isAddingRef = useRef(false);
+  // QStash messageId haritası: taskId → messageId
+  // Görev silinince / tamamlanınca zamanlanmış mesajı iptal etmek için
+  const qstashMessageIds = useRef<Map<string, string>>(new Map());
 
   // ── Görevleri yükle ────────────────────────────────────────
   const fetchTasks = useCallback(async () => {
@@ -190,16 +193,27 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
 
         // ── QStash: Hatırlatıcı zamanlaması ────────────────────────────────
         // Görev başarıyla kaydedildikten sonra, eğer reminder_time varsa
-        // QStash'e geciktirilmiş bir iş tanımla.
+        // QStash'e "Not-Before" zamanlı bir iş tanımla.
         if (savedTask.reminder_time) {
-          // Hata olsa bile görev eklemeyi bloke etme
           scheduleTaskReminder({
-            taskId:      savedTask.id,
-            title:       savedTask.title,
+            taskId:       savedTask.id,
+            title:        savedTask.title,
             reminderTime: savedTask.reminder_time,
-            priority:    savedTask.priority,
+            priority:     savedTask.priority,
+          }).then((result) => {
+            if (result.ok && result.messageId) {
+              // messageId'yi sakla — silme/tamamlama sırasında iptal için
+              qstashMessageIds.current.set(savedTask.id, result.messageId);
+              console.log(
+                `[useTasks] ✅ QStash zamanlandı: taskId=${savedTask.id}`,
+                `messageId=${result.messageId}`,
+                `scheduledAt=${result.scheduledAtUnix ? new Date(result.scheduledAtUnix * 1000).toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' }) : 'N/A'}`
+              );
+            } else if (!result.ok) {
+              console.error('[useTasks] ❌ QStash zamanlama başarısız:', result.error);
+            }
           }).catch((err) => {
-            console.error('[useTasks] QStash zamanlama hatası:', err);
+            console.error('[useTasks] ❌ QStash zamanlama hatası (beklenmeyen):', err);
           });
         }
       }
@@ -247,6 +261,16 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
       )
     );
 
+    // Görev tamamlandıysa ve henüz bildirim gönderilmediyse QStash mesajını iptal et
+    if (newCompleted) {
+      const msgId = qstashMessageIds.current.get(id);
+      if (msgId) {
+        console.log(`[useTasks] Görev tamamlandı, QStash mesajı iptal ediliyor: ${msgId}`);
+        void cancelTaskReminder(msgId);
+        qstashMessageIds.current.delete(id);
+      }
+    }
+
     try {
       const updatePayload: TaskUpdate = {
         completed: newCompleted,
@@ -276,6 +300,14 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
   // ── Görev sil ───────────────────────────────────────────────
   const deleteTask = useCallback(async (id: string) => {
     const deleted = tasks.find((t) => t.id === id);
+
+    // Zamanlanmış QStash mesajını iptal et (henüz bildirim gönderilmemişse)
+    const msgId = qstashMessageIds.current.get(id);
+    if (msgId) {
+      console.log(`[useTasks] Görev siliniyor, QStash mesajı iptal ediliyor: ${msgId}`);
+      void cancelTaskReminder(msgId);
+      qstashMessageIds.current.delete(id);
+    }
 
     // Optimistic update
     setTasks((prev) => prev.filter((t) => t.id !== id));
