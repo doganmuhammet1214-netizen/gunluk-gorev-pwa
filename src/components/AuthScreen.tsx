@@ -68,7 +68,7 @@ export function AuthScreen({
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center px-5 select-none transition-colors duration-300"
+      className="min-h-dvh h-dvh w-full flex flex-col items-center justify-center px-5 select-none transition-colors duration-300 overflow-hidden"
       style={{
         background: 'var(--bg)',
         paddingTop: 'max(1.5rem, env(safe-area-inset-top))',

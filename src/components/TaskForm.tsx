@@ -165,7 +165,7 @@ export function TaskForm({ onAdd, onClose, isSubmitting = false }: TaskFormProps
 
       {/* Sheet */}
       <div
-        className="relative w-full max-w-sm border rounded-t-3xl pt-5 px-5 animate-slide-up shadow-2xl transition-colors duration-300 select-none"
+        className="relative w-full max-w-md border-t sm:border rounded-t-3xl pt-5 px-5 animate-slide-up shadow-2xl transition-colors duration-300 select-none"
         style={{
           background: 'var(--sheet-bg)',
           borderColor: 'var(--border-strong)',

@@ -63,7 +63,7 @@ function App() {
   if (authLoading) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center select-none"
+        className="min-h-dvh h-dvh w-full flex items-center justify-center select-none"
         style={{ background: 'var(--bg)' }}
       >
         {/* Arka plan glow */}
@@ -107,9 +107,9 @@ function App() {
 
   // ── Oturum açık → ana uygulama ────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-app flex items-center justify-center transition-colors duration-300">
-      {/* Mobile frame */}
-      <div className="relative w-full max-w-sm h-screen max-h-[900px] bg-app overflow-hidden flex flex-col shadow-2xl border-x border-app transition-colors duration-300 select-none">
+    <div className="min-h-dvh h-dvh w-full bg-app flex items-center justify-center transition-colors duration-300 overflow-hidden">
+      {/* Mobile / PWA frame — Mobilde tam ekran (full screen), Masaüstünde (sm+) kart görünümlü */}
+      <div className="relative w-full h-full sm:max-w-md sm:h-[92vh] sm:max-h-[900px] sm:rounded-3xl sm:border sm:border-app sm:shadow-2xl bg-app overflow-hidden flex flex-col transition-colors duration-300 select-none">
 
         {/* ─── Loading overlay (ilk yükleme) ─── */}
         {loading === 'loading' && activeTasks.length === 0 && completedTasks.length === 0 && (
