@@ -32,33 +32,66 @@ export function TestNotificationButton() {
   const handleTest = async () => {
     setToast({ type: 'loading' });
 
+    // ── En dış try-catch: ağ, CORS veya JS hatalarını yakalar ─────────────
     try {
-      // ── 1. Oturum token'ını al ─────────────────────────────────────────────
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      // ── 0. Ortam değişkenini doğrula ──────────────────────────────────────
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 
-      if (sessionError || !sessionData.session) {
-        const msg = `Oturum bilgisi alınamadı: ${sessionError?.message ?? 'Session null'}`;
+      if (!supabaseUrl) {
+        const msg = 'VITE_SUPABASE_URL tanımlı değil! .env dosyasını kontrol et.';
         console.error('[TestNotif] ❌', msg);
         setToast({ type: 'error', message: msg });
         return;
       }
 
-      const accessToken = sessionData.session.access_token;
-      console.log('[TestNotif] Oturum doğrulandı, Edge Function çağrılıyor...');
+      // ── 1. Oturum token'ını al ─────────────────────────────────────────────
+      console.log('[TestNotif] Oturum alınıyor...');
+      let accessToken: string;
 
-      // ── 2. Edge Function'ı çağır ───────────────────────────────────────────
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-      const fnUrl       = `${supabaseUrl}/functions/v1/send-test-notification`;
+      try {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
 
-      const res = await fetch(fnUrl, {
-        method:  'POST',
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      });
+        if (sessionError || !sessionData.session) {
+          const msg = `Oturum bilgisi alınamadı: ${sessionError?.message ?? 'Session null'}`;
+          console.error('[TestNotif] ❌', msg);
+          setToast({ type: 'error', message: msg });
+          return;
+        }
 
-      const data = await res.json() as {
+        accessToken = sessionData.session.access_token;
+        console.log('[TestNotif] ✅ Oturum doğrulandı.');
+      } catch (sessionErr) {
+        const msg = `Oturum alma hatası: ${sessionErr instanceof Error ? sessionErr.message : JSON.stringify(sessionErr)}`;
+        console.error('[TestNotif] ❌', msg, sessionErr);
+        setToast({ type: 'error', message: msg });
+        return;
+      }
+
+      // ── 2. Edge Function isteğini at ───────────────────────────────────────
+      const fnUrl = `${supabaseUrl}/functions/v1/send-test-notification`;
+      console.log('[TestNotif] Edge Function isteği atılıyor...', { url: fnUrl });
+
+      let res: Response;
+      try {
+        res = await fetch(fnUrl, {
+          method:  'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        });
+      } catch (fetchErr) {
+        // Ağ hatası veya CORS engeli — Response hiç gelmedi
+        const msg = `Ağ/CORS hatası — sunucuya ulaşılamadı: ${fetchErr instanceof Error ? fetchErr.message : JSON.stringify(fetchErr)}`;
+        console.error('[TestNotif] ❌ fetch() başarısız:', fetchErr);
+        setToast({ type: 'error', message: msg });
+        return;
+      }
+
+      console.log('[TestNotif] HTTP yanıt alındı. Status:', res.status);
+
+      // ── 3. Yanıt gövdesini ayrıştır ───────────────────────────────────────
+      let data: {
         success?:  boolean;
         sent?:     number;
         failed?:   number;
@@ -68,17 +101,29 @@ export function TestNotificationButton() {
         hint?:     string;
       };
 
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        const rawText = await res.text().catch(() => '(gövde okunamadı)');
+        const msg = `Yanıt JSON parse hatası (HTTP ${res.status}): ${rawText.slice(0, 200)}`;
+        console.error('[TestNotif] ❌', msg, jsonErr);
+        setToast({ type: 'error', message: msg });
+        return;
+      }
+
       console.log('[TestNotif] Edge Function yanıtı:', data);
 
-      // ── 3. Yanıtı değerlendir ──────────────────────────────────────────────
+      // ── 4. Yanıtı değerlendir ──────────────────────────────────────────────
       if (!res.ok || data.error) {
-        const errDetail = data.hint ? `${data.error} (İpucu: ${data.hint})` : (data.error ?? `HTTP ${res.status}`);
+        const errDetail = data.hint
+          ? `${data.error} (İpucu: ${data.hint})`
+          : (data.error ?? `HTTP ${res.status}`);
         console.error('[TestNotif] ❌ Hata:', errDetail, '\nTam yanıt:', data);
         setToast({ type: 'error', message: errDetail });
         return;
       }
 
-      // Kısmi başarı da olabilir
+      // Kısmi başarı
       if (data.sent === 0 && (data.total ?? 0) > 0) {
         const failDetails = data.results
           ?.filter(r => !r.ok)
@@ -99,8 +144,11 @@ export function TestNotificationButton() {
       setTimeout(() => setToast({ type: 'idle' }), 5000);
 
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error('[TestNotif] ❌ Beklenmeyen hata:', err);
+      // Catch edilemeyen son savunma hattı
+      const msg = err instanceof Error
+        ? `${err.name}: ${err.message}`
+        : JSON.stringify(err);
+      console.error('[TestNotif] ❌ Yakalanmamış hata:', err);
       setToast({ type: 'error', message: `Beklenmeyen hata: ${msg}` });
     }
   };
